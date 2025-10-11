@@ -1,0 +1,1 @@
+MicroDoc is a healthcare documentation Assistant that Automate clinical and microbiology lab documentation with AI-powered voice-to-text and smart analytics for Nigerian healthcare professionals.
