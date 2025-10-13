@@ -1,37 +1,48 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useAuthStore } from '@/lib/store/auth-store';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { toast } from 'sonner';
-import { patientsApi } from '@/lib/api/services'; // hypothetical API
+import { useAuthStore } from "@/lib/store/auth-store";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { patientsApi } from "@/lib/api/services"; // hypothetical API
 
 export default function NewPatientPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
 
   const [form, setForm] = useState({
-    fullName: '',
-    gender: '',
-    age: '',
-    phone: '',
-    email: '',
-    bloodGroup: '',
-    allergies: '',
-    medicalHistory: '',
-    assignedClinician: user?.name || '',
+    patientId: `PAT-${Date.now().toString().slice(-6)}`,
+    name: "",
+    age: "",
+    gender: "",
+    contact: "",
+    address: "",
+    medicalHistory: "",
+    allergies: "",
+    bloodGroup: "",
+    cardNumber: "",
+    registeredBy: user?.id || "",
+    assignedClinician: user?.name || "",
   });
 
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -39,8 +50,19 @@ export default function NewPatientPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.fullName || !form.gender || !form.age || !form.phone) {
-      toast.error('Please fill all required fields');
+    if (
+      !form.name ||
+      !form.gender ||
+      !form.age ||
+      !form.contact ||
+      !form.address ||
+      !form.gender ||
+      !form.age ||
+      !form.contact ||
+      !form.address ||
+      !form.bloodGroup
+    ) {
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -48,27 +70,32 @@ export default function NewPatientPage() {
     try {
       const payload = {
         ...form,
-        registeredBy: user?.id,
+        age: Number(form.age),
+        allergies: form.allergies
+          ? form.allergies.split(",").map((a) => a.trim())
+          : [],
+        // registeredBy: user?.id,
         registrationDate: new Date().toISOString(),
       };
 
+      console.log("Submitting patient:", payload);
       const response = await patientsApi.createPatient(payload);
       if (response.success) {
-        toast.success('Patient registered successfully');
-        router.push('/patients');
+        toast.success("Patient registered successfully");
+        router.push("/patients");
       } else {
-        toast.error('Failed to register patient');
+        toast.error("Failed to register patient");
       }
     } catch (error) {
       console.error(error);
-      toast.error('Error registering patient');
+      toast.error("Error registering patient");
     } finally {
       setLoading(false);
     }
   };
 
   if (!isAuthenticated || !user) {
-    router.push('/login');
+    router.push("/login");
     return null;
   }
 
@@ -85,19 +112,21 @@ export default function NewPatientPage() {
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className='block mb-2'>Full Name *</Label>
+                  <Label className="block mb-2">Full Name *</Label>
                   <Input
-                    name="fullName"
-                    value={form.fullName}
+                    name="name"
+                    value={form.name}
                     onChange={handleChange}
                     placeholder="John Doe"
                   />
                 </div>
                 <div>
-                  <Label className='block mb-2'>Gender *</Label>
+                  <Label className="block mb-2">Gender *</Label>
                   <Select
                     value={form.gender}
-                    onValueChange={(val) => setForm((p) => ({ ...p, gender: val }))}
+                    onValueChange={(val) =>
+                      setForm((p) => ({ ...p, gender: val }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
@@ -111,7 +140,7 @@ export default function NewPatientPage() {
                 </div>
 
                 <div>
-                  <Label className='block mb-2'>Age *</Label>
+                  <Label className="block mb-2">Age *</Label>
                   <Input
                     name="age"
                     value={form.age}
@@ -121,31 +150,44 @@ export default function NewPatientPage() {
                   />
                 </div>
                 <div>
-                  <Label className='block mb-2'>Phone *</Label>
+                  <Label className="block mb-2">Phone *</Label>
                   <Input
-                    name="phone"
-                    value={form.phone}
+                    name="contact"
+                    value={form.contact}
                     onChange={handleChange}
-                    placeholder="+234 810 234 5678"
+                    placeholder="+234 704 *** 3184"
                   />
                 </div>
 
                 <div>
-                  <Label className='block mb-2'>Email</Label>
+                  <Label className="block mb-2">Card Number (optional)</Label>
                   <Input
-                    name="email"
-                    value={form.email}
+                    name="cardNumber"
+                    value={form.cardNumber}
                     onChange={handleChange}
-                    type="email"
-                    placeholder="example@email.com"
+                    type="cardNumber"
+                    placeholder="e.g HOSP/2023/00123"
                   />
                 </div>
 
                 <div>
-                  <Label className='block mb-2'>Blood Group</Label>
+                  <Label className="block mb-2">Address</Label>
+                  <Input
+                    name="address"
+                    value={form.address}
+                    onChange={handleChange}
+                    type="address"
+                    placeholder="your address"
+                  />
+                </div>
+
+                <div>
+                  <Label className="block mb-2">Blood Group</Label>
                   <Select
                     value={form.bloodGroup}
-                    onValueChange={(val) => setForm((p) => ({ ...p, bloodGroup: val }))}
+                    onValueChange={(val) =>
+                      setForm((p) => ({ ...p, bloodGroup: val }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select blood group" />
@@ -166,17 +208,17 @@ export default function NewPatientPage() {
 
               {/* Medical Info */}
               <div>
-                <Label className='block mb-2'>Allergies</Label>
+                <Label className="block mb-2">Allergies</Label>
                 <Textarea
                   name="allergies"
                   value={form.allergies}
                   onChange={handleChange}
-                  placeholder="Enter known allergies"
+                  placeholder="Enter known allergies (comma-separated)"
                 />
               </div>
 
               <div>
-                <Label className='block mb-2'>Medical History</Label>
+                <Label className="block mb-2">Medical History</Label>
                 <Textarea
                   name="medicalHistory"
                   value={form.medicalHistory}
@@ -187,10 +229,20 @@ export default function NewPatientPage() {
 
               {/* Administrative Info */}
               <div>
-                <Label className='block mb-2'>Assigned Clinician</Label>
+                <Label className="block mb-2">Assigned Clinician</Label>
                 <Input
                   name="assignedClinician"
                   value={form.assignedClinician}
+                  onChange={handleChange}
+                  placeholder="Dr. Smith"
+                />
+              </div>
+
+              <div>
+                <Label className="block mb-2">Registered By</Label>
+                <Input
+                  name="registeredBy"
+                  value={form.registeredBy}
                   onChange={handleChange}
                   placeholder="Dr. Smith"
                 />
@@ -201,7 +253,7 @@ export default function NewPatientPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  {loading ? 'Registering...' : 'Register Patient'}
+                  {loading ? "Registering..." : "Register Patient"}
                 </Button>
               </div>
             </form>

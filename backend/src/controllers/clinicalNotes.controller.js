@@ -1,32 +1,28 @@
-import ClinicalNote from '../models/clinicalNote.model.js';
-import Patient from '../models/Patient.model.js';
+import ClinicalNote from "../models/clinicalNote.model.js";
+import Patient from "../models/Patient.model.js";
 
 export const getClinicalNotes = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const filter = { clinicianId: req.user?.userId };
-    
-    if (req.query.patientId) {
-      filter.patientId = req.query.patientId;
-    }
 
-    if (req.query.type) {
-      filter.type = req.query.type;
-    }
+    if (req.query.patientId) filter.patientId = req.query.patientId;
+    if (req.query.type) filter.type = req.query.type;
 
-    const notes = await ClinicalNote.find(filter)
-      .populate('patientId', 'name patientId age gender')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const [notes, total] = await Promise.all([
+      ClinicalNote.find(filter)
+        .populate("patientId", "name patientId age gender cardNumber")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      ClinicalNote.countDocuments(filter),
+    ]);
 
-    const total = await ClinicalNote.countDocuments(filter);
-
-    res.json({
+    return res.json({
       success: true,
       data: {
         items: notes,
@@ -34,15 +30,15 @@ export const getClinicalNotes = async (req, res) => {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
-      }
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     });
   } catch (error) {
-    console.error('Get clinical notes error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch clinical notes' 
+    console.error("❌ Get clinical notes error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch clinical notes",
     });
   }
 };
@@ -53,44 +49,57 @@ export const getClinicalNoteById = async (req, res) => {
 
     const note = await ClinicalNote.findOne({
       _id: id,
-      clinicianId: req.user?.userId
-    }).populate('patientId', 'name patientId age gender contact');
+      clinicianId: req.user?.userId,
+    }).populate("patientId", "name patientId age gender contact cardNumber");
 
     if (!note) {
-      res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: 'Clinical note not found' 
+        error: "Clinical note not found",
       });
-      return;
     }
 
-    res.json({
-      success: true,
-      data: note
-    });
+    res.json({ success: true, data: note });
   } catch (error) {
-    console.error('Get clinical note by ID error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch clinical note' 
+    console.error("❌ Get clinical note by ID error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch clinical note",
     });
   }
 };
 
 export const createClinicalNote = async (req, res) => {
   try {
-    const { patientId, type, content, transcript, summary, priority } = req.body;
+    const {
+      patientId,
+      type,
+      content,
+      transcript,
+      summary,
+      priority,
+      chiefComplaint,
+      diagnosis,
+      plan,
+    } = req.body;
+
+    if (!patientId || !type || !content) {
+      return res.status(400).json({
+        success: false,
+        error: "Patient ID, type, and content are required",
+      });
+    }
 
     // Verify patient exists
     const patient = await Patient.findById(patientId);
     if (!patient) {
-      res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: 'Patient not found' 
+        error: "Patient not found",
       });
-      return;
     }
 
+    // Create note
     const note = await ClinicalNote.create({
       patientId,
       clinicianId: req.user?.userId,
@@ -98,21 +107,25 @@ export const createClinicalNote = async (req, res) => {
       content,
       transcript,
       summary,
-      priority: priority || 'medium',
-      isSynced: true
+      priority: priority || "medium",
+      chiefComplaint,
+      diagnosis,
+      plan,
+      isSynced: true,
     });
 
-    await note.populate('patientId', 'name patientId age gender');
+    await note.populate("patientId", "name patientId age gender cardNumber");
 
     res.status(201).json({
       success: true,
-      data: note
+      message: "Clinical note created successfully",
+      data: note,
     });
   } catch (error) {
-    console.error('Create clinical note error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to create clinical note' 
+    console.error("❌ Create clinical note error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create clinical note",
     });
   }
 };
@@ -120,31 +133,53 @@ export const createClinicalNote = async (req, res) => {
 export const updateClinicalNote = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+
+    const {
+      type,
+      content,
+      transcript,
+      summary,
+      priority,
+      chiefComplaint,
+      diagnosis,
+      plan,
+    } = req.body;
+
+    const updateData = {
+      type,
+      content,
+      transcript,
+      summary,
+      priority,
+      chiefComplaint,
+      diagnosis,
+      plan,
+    };
+
 
     const note = await ClinicalNote.findOneAndUpdate(
       { _id: id, clinicianId: req.user?.userId },
       updateData,
       { new: true, runValidators: true }
-    ).populate('patientId', 'name patientId age gender');
+    ).populate("patientId", "name patientId age gender cardNumber");
 
     if (!note) {
-      res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: 'Clinical note not found' 
+        error: "Clinical note not found",
       });
-      return;
     }
 
     res.json({
       success: true,
-      data: note
+      message: "Clinical note updated successfully",
+      data: note,
     });
   } catch (error) {
-    console.error('Update clinical note error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to update clinical note' 
+    console.error("❌ Update clinical note error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to update clinical note",
     });
   }
 };
@@ -155,26 +190,25 @@ export const deleteClinicalNote = async (req, res) => {
 
     const note = await ClinicalNote.findOneAndDelete({
       _id: id,
-      clinicianId: req.user?.userId
+      clinicianId: req.user?.userId,
     });
 
     if (!note) {
-      res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: 'Clinical note not found' 
+        error: "Clinical note not found",
       });
-      return;
     }
 
     res.json({
       success: true,
-      message: 'Clinical note deleted successfully'
+      message: "Clinical note deleted successfully",
     });
   } catch (error) {
-    console.error('Delete clinical note error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to delete clinical note' 
+    console.error("❌ Delete clinical note error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete clinical note",
     });
   }
 };
@@ -182,34 +216,28 @@ export const deleteClinicalNote = async (req, res) => {
 export const getNotesByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Verify patient exists
+    // ✅ Verify patient exists
     const patient = await Patient.findById(patientId);
     if (!patient) {
-      res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: 'Patient not found' 
+        error: "Patient not found",
       });
-      return;
     }
 
-    const notes = await ClinicalNote.find({
-      patientId,
-      clinicianId: req.user?.userId
-    })
-      .populate('patientId', 'name patientId age gender')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    const total = await ClinicalNote.countDocuments({
-      patientId,
-      clinicianId: req.user?.userId
-    });
+    const [notes, total] = await Promise.all([
+      ClinicalNote.find({ patientId, clinicianId: req.user?.userId })
+        .populate("patientId", "name patientId age gender cardNumber")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      ClinicalNote.countDocuments({ patientId, clinicianId: req.user?.userId }),
+    ]);
 
     res.json({
       success: true,
@@ -219,7 +247,8 @@ export const getNotesByPatient = async (req, res) => {
           name: patient.name,
           patientId: patient.patientId,
           age: patient.age,
-          gender: patient.gender
+          gender: patient.gender,
+          cardNumber: patient.cardNumber || "Not provided",
         },
         notes: {
           items: notes,
@@ -227,16 +256,16 @@ export const getNotesByPatient = async (req, res) => {
             page,
             limit,
             total,
-            totalPages: Math.ceil(total / limit)
-          }
-        }
-      }
+            totalPages: Math.ceil(total / limit),
+          },
+        },
+      },
     });
   } catch (error) {
-    console.error('Get notes by patient error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch patient notes' 
+    console.error("❌ Get notes by patient error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch patient notes",
     });
   }
 };
@@ -247,37 +276,35 @@ export const generateSummary = async (req, res) => {
 
     const note = await ClinicalNote.findOne({
       _id: id,
-      clinicianId: req.user?.userId
+      clinicianId: req.user?.userId,
     });
 
     if (!note) {
-      res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: 'Clinical note not found' 
+        error: "Clinical note not found",
       });
-      return;
     }
 
-    // Simulate AI summary generation
-    // In production, integrate with OpenAI or similar service
-    const aiSummary = `AI-generated summary for clinical note: ${note.content.substring(0, 100)}... 
-Key points extracted: Patient presentation, symptoms, and recommended follow-up.`;
+    // ✅ Simulate AI summary generation
+    const aiSummary = `Summary: ${note.content.slice(0, 100)}...
+Key insights extracted: symptoms, findings, and recommendations.`;
 
     note.summary = aiSummary;
     await note.save();
 
+    await note.populate("patientId", "name patientId age gender cardNumber");
+
     res.json({
       success: true,
-      data: {
-        summary: aiSummary,
-        note: await note.populate('patientId', 'name patientId age gender')
-      }
+      message: "AI summary generated successfully",
+      data: note,
     });
   } catch (error) {
-    console.error('Generate summary error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to generate summary' 
+    console.error("❌ Generate summary error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to generate summary",
     });
   }
 };

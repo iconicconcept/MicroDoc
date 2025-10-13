@@ -14,26 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { patientsApi } from "@/lib/api/services";
 import { toast } from "sonner";
-import {
-  Plus,
-  Search,
-  UserRound,
-  Calendar,
-  Filter,
-  Mic,
-} from "lucide-react";
+import { Plus, Search, UserRound, Calendar, Filter, Mic } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
 import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
 
 type Patient = {
-  id: string;
-  fullName: string;
+  _id: string;
+  name: string;
   age: number;
   gender: string;
-  phone: string;
-  email?: string;
+  contact: string;
+  allergies: string;
+  address?: string;
+  cardNumber?: string;
   bloodGroup?: string;
   assignedClinician?: string;
   createdAt: string;
@@ -56,12 +51,13 @@ export default function PatientsPage() {
 
   const loadPatients = async () => {
     try {
-      const response = await patientsApi.getAll();
+      const response = await patientsApi.getPatients();
       if (response.success && response.data) {
-        setPatients(response.data);
+        setPatients(response.data?.items || []);
       }
     } catch (error) {
       toast.error("Failed to load patients");
+      console.error("Failed to patients", error);
     } finally {
       setIsLoading(false);
     }
@@ -69,16 +65,21 @@ export default function PatientsPage() {
 
   const filteredPatients = patients.filter(
     (p) =>
-      p.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.contact.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.assignedClinician?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.allergies?.includes(searchTerm.toLowerCase()) ||
+      p.bloodGroup?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.age.toString().includes(searchTerm) ||
+      p.gender.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      // p.cardNumber.includes(searchTerm) ||
       p.assignedClinician?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (!isAuthenticated || !user) {
-    router.push('/login');
+    // router.push("/login");
     return null;
   }
-
 
   return (
     <DashboardLayout user={user}>
@@ -91,7 +92,7 @@ export default function PatientsPage() {
               Manage and onboard patients for your facility
             </p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-col md:flex-row gap-2 space-x-3">
             <Button variant="outline" onClick={() => setShowGuideModal(true)}>
               <Mic className="h-4 w-4 mr-2" />
               Voice Search
@@ -113,6 +114,7 @@ export default function PatientsPage() {
                   placeholder="Search patients by name, phone, or clinician..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && loadPatients()}
                   className="pl-10"
                 />
               </div>
@@ -166,9 +168,9 @@ export default function PatientsPage() {
               <div className="space-y-4">
                 {filteredPatients.map((p) => (
                   <div
-                    key={p.id}
+                    key={p._id}
                     className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/patients/${p.id}`)}
+                    onClick={() => router.push(`/patients/${p._id}`)}
                   >
                     <div className="p-3 rounded-full bg-blue-50 text-blue-600">
                       <UserRound className="h-5 w-5" />
@@ -177,10 +179,13 @@ export default function PatientsPage() {
                       <div className="flex items-start justify-between mb-1">
                         <div>
                           <h3 className="font-medium text-gray-900">
-                            {p.fullName}
+                            {p.name}
                           </h3>
                           <p className="text-sm text-gray-500">
                             {p.gender}, {p.age} yrs • {p.bloodGroup || "N/A"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {p.cardNumber || "Card Num. not Provided"}
                           </p>
                         </div>
                         <div className="text-right text-sm text-gray-500">
@@ -191,8 +196,16 @@ export default function PatientsPage() {
                         </div>
                       </div>
                       <p className="text-gray-700 text-sm">
-                        {p.phone} • {p.email || "No email"}
+                        {p.contact} • {p.address || "No address provided"}
                       </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push(`/patients/${p._id}`)}
+                        className="mt-1 cursor-pointer"
+                      >
+                        View Details
+                      </Button>
                       {p.assignedClinician && (
                         <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
                           <strong>Clinician:</strong> {p.assignedClinician}

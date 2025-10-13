@@ -18,7 +18,7 @@ router.use(authenticate);
 
 const noteValidation = [
   body('patientId').notEmpty().withMessage('Patient ID is required'),
-  body('type').isIn(['clinical', 'lab', 'procedure']).withMessage('Valid type is required'),
+  body('type').optional().isIn(['clinical', 'lab', 'procedure']).withMessage('Valid type is required'),
   body('content').notEmpty().trim().withMessage('Content is required'),
   body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Valid priority is required'),
   body('transcript').optional().trim(),

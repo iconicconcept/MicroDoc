@@ -46,10 +46,11 @@ export default function LabReportsPage() {
     try {
       const response = await labReportsApi.getReports(1, 20);
       if (response.success && response.data) {
-        setReports(response.data.items);
+        setReports(response.data?.items);
       }
     } catch (error) {
       toast.error("Failed to load lab reports");
+      console.error("Failed to load lab reports", error);  
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +62,10 @@ export default function LabReportsPage() {
       report.testType?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!isAuthenticated || !user) return null;
+  if (!isAuthenticated || !user) {
+    router.push("/login");
+    return null;
+  }
 
   return (
     <DashboardLayout user={user}>

@@ -25,7 +25,7 @@ export interface Patient {
 }
 
 export interface ClinicalNote {
-  id: string;
+  _id: string;
   patientId: string;
   clinicianId: string;
   type: 'clinical' | 'lab' | 'procedure';
@@ -49,9 +49,9 @@ export interface LabReport {
   sampleId: string;
   patientId: string;
   microbiologistId: string;
-  testType: 'gram_stain' | 'culture_sensitivity' | 'pcr' | 'antigen' | 'other';
+  testType: string,
   pathogen?: string;
-  results: string;
+  results?: string;
   antibioticSensitivity: string[];
   findings: string;
   status: 'pending' | 'completed' | 'cancelled';
@@ -59,12 +59,12 @@ export interface LabReport {
   isSynced: boolean;
   createdAt: string;
   updatedAt: string;
-  patient?: {
-    name: string;
-    patientId: string;
-    age: number;
-    gender: string;
-  };
+  // patient?: {
+  //   name: string;
+  //   patientId: string;
+  //   age: number;
+  //   gender: string;
+  // };
 }
 
 export interface BurnoutEntry {

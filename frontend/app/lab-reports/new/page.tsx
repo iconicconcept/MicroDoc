@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { labReportsApi } from "@/lib/api/services";
+import { patientsApi } from "@/lib/api/services";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,14 +23,32 @@ export default function NewLabReportPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
 
-  const [patientName, setPatientName] = useState("");
   const [testType, setTestType] = useState("");
   const [status, setStatus] = useState("pending");
   const [resultSummary, setResultSummary] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [patients, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState("");
+  const [loadingPatients, setLoadingPatients] = useState(true);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const res = await patientsApi.getPatients(); // assumes /patients endpoint exists
+        if (res.success) setPatients(res.data.items || []);
+      } catch (err) {
+        toast.error("Failed to load patients");
+        console.error("Failed to load patients", err);
+      } finally {
+        setLoadingPatients(false);
+      }
+    };
+    fetchPatients();
+  }, []);
+
   const handleSubmit = async () => {
-    if (!patientName || !testType || !resultSummary) {
+    if ( !testType || !resultSummary) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -37,11 +56,14 @@ export default function NewLabReportPage() {
     setLoading(true);
     try {
       const payload = {
-        patientId: "temp-patient-id",
-        clinicianId: user?.id || "",
+        sampleId: `SAMPLE-${Date.now()}`,
+        patientId: selectedPatient,
         testType,
+        pathogen: "N/A",
+        results: resultSummary,
+        antibioticSensitivity: [],
+        findings: resultSummary,
         status,
-        resultSummary,
       };
 
       const response = await labReportsApi.createReport(payload);
@@ -59,6 +81,11 @@ export default function NewLabReportPage() {
     }
   };
 
+  if (!selectedPatient) {
+    toast.error("Please select a patient");
+    return;
+  }
+
   if (!isAuthenticated || !user) return null;
 
   return (
@@ -71,13 +98,27 @@ export default function NewLabReportPage() {
           <CardContent className="space-y-6">
             <div>
               <label className="text-sm font-medium block mb-2">
-                Patient Name
+                Select Patient
               </label>
-              <Input
-                value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
-                placeholder="Enter patient's name"
-              />
+              <Select
+                value={selectedPatient}
+                onValueChange={setSelectedPatient}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a patient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingPatients ? (
+                    <SelectItem value="">Loading...</SelectItem>
+                  ) : (
+                    patients.map((p: any) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} — {p.patientId}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>

@@ -15,11 +15,13 @@ import { Input } from "@/components/ui/input";
 import { clinicalNotesApi } from "@/lib/api/services";
 import { ClinicalNote } from "@/types/medical";
 import { formatDate } from "@/lib/utils";
-import { Plus, Search, FileText, Calendar, Filter } from "lucide-react";
+import { Plus, Search, FileText, Calendar, Filter, Badge } from "lucide-react";
 import { toast } from "sonner";
 import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
 import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
-import { useRouter } from  "next/navigation";
+import NoteDetailsModal from "@/components/clinical/NoteDetailsModal";
+
+import { useRouter } from "next/navigation";
 
 export default function ClinicalNotesPage() {
   const router = useRouter();
@@ -29,6 +31,8 @@ export default function ClinicalNotesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<ClinicalNote | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -40,10 +44,18 @@ export default function ClinicalNotesPage() {
     try {
       const response = await clinicalNotesApi.getNotes(1, 20);
       if (response.success && response.data) {
-        setNotes(response.data.data.items);
+        const response = await clinicalNotesApi.getNotes(1, 20);
+        if (response.success && response.data) {
+          const formattedNotes = response.data.items.map((note: any) => ({
+            ...note,
+            patient: note.patientId,
+          }));
+          setNotes(formattedNotes);
+        }
       }
     } catch (error) {
       toast.error("Failed to load clinical notes");
+      console.error("Failed to load clinical notes", error);
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +67,13 @@ export default function ClinicalNotesPage() {
       note.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleView = (note: ClinicalNote) => {
+    setSelectedNote(note);
+    setIsModalOpen(true);
+  };
+
   if (!isAuthenticated || !user) {
+    router.push("/login");
     return null;
   }
 
@@ -70,7 +88,7 @@ export default function ClinicalNotesPage() {
               Manage and review patient clinical documentation
             </p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-col md:flex-row space-x-3">
             <Button variant="outline" onClick={() => setShowGuideModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Voice Note
@@ -135,7 +153,7 @@ export default function ClinicalNotesPage() {
                     ? "Try adjusting your search terms"
                     : "Get started by creating your first clinical note"}
                 </p>
-                <Button onClick={() => setShowVoiceModal(true)}>
+                <Button onClick={() => router.push("/clinical-notes/new")}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Note
                 </Button>
@@ -145,44 +163,72 @@ export default function ClinicalNotesPage() {
                 {filteredNotes.map((note) => (
                   <div
                     key={note.id}
-                    className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <div
-                      className={`p-3 rounded-full ${
-                        note.priority === "high"
-                          ? "bg-red-50 text-red-600"
-                          : note.priority === "medium"
-                          ? "bg-amber-50 text-amber-600"
-                          : "bg-green-50 text-green-600"
-                      }`}
-                    >
-                      <FileText className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-medium text-gray-900">
-                            {note.patient?.name || "Unknown Patient"}
-                          </h3>
-                          <p className="text-sm text-gray-500 capitalize">
-                            {note.type} • Priority: {note.priority}
-                          </p>
-                        </div>
-                        <div className="text-right text-sm text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{formatDate(note.createdAt)}</span>
+                    <div className="flex items-start space-x-4 flex-1 min-w-0">
+                      <div
+                        className={`p-3 rounded-full ${
+                          note.priority === "high"
+                            ? "bg-red-50 text-red-600"
+                            : note.priority === "medium"
+                            ? "bg-amber-50 text-amber-600"
+                            : "bg-green-50 text-green-600"
+                        }`}
+                      >
+                        <FileText className="h-5 w-5" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="font-medium text-gray-900">
+                              {note.patient?.name || "Unknown Patient"}
+                            </h3>
+                            <p className="text-sm flex gap-2 text-gray-500 capitalize">
+                              {note.type} •{" "}
+                              <Badge
+                                className={`text-[6px] p-1.5 rounded-full ${
+                                  note.priority === "high"
+                                    ? "bg-red-500 text-white"
+                                    : note.priority === "medium"
+                                    ? "bg-yellow-400 text-black"
+                                    : "bg-green-500 text-white"
+                                }`}
+                              >
+                                {note.priority}
+                              </Badge>
+                            </p>
+                          </div>
+                          <div className="text-right text-sm text-gray-500">
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>{formatDate(note.createdAt)}</span>
+                            </div>
                           </div>
                         </div>
+
+                        <p className="text-gray-700 text-sm line-clamp-2">
+                          {note.content}
+                        </p>
+
+                        {note.summary && (
+                          <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
+                            <strong>Summary:</strong> {note.summary}
+                          </div>
+                        )}
                       </div>
-                      <p className="text-gray-700 text-sm line-clamp-2">
-                        {note.content}
-                      </p>
-                      {note.summary && (
-                        <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                          <strong>Summary:</strong> {note.summary}
-                        </div>
-                      )}
+                    </div>
+
+                    {/* View Details Button */}
+                    <div className="ml-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push(`/clinical-notes/${note._id}`)}
+                        className="mt-1 cursor-pointer"
+                      >
+                        View Details
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -204,6 +250,12 @@ export default function ClinicalNotesPage() {
       <VoiceNoteModal
         isOpen={showVoiceModal}
         onClose={() => setShowVoiceModal(false)}
+      />
+
+      <NoteDetailsModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        note={selectedNote}
       />
     </DashboardLayout>
   );

@@ -18,7 +18,7 @@ export const authApi = {
   login: async (email: string, password: string) => {
     const response = await apiClient.post<
       ApiResponse<{ user: User; token: string }>
-    >(`/auth/login`, {
+    >(`${API_BASE_URL}/auth/login`, {
       email,
       password,
     });
@@ -111,7 +111,7 @@ export const labReportsApi = {
     reportData: Omit<LabReport, "id" | "createdAt" | "updatedAt">
   ) => {
     const response = await apiClient.post<ApiResponse<LabReport>>(
-      "/lab-reports",
+      `${API_BASE_URL}/lab-reports`,
       reportData
     );
     return response.data;
@@ -168,6 +168,9 @@ export const patientsApi = {
     >(`${API_BASE_URL}/patients?${params}`);
     return response.data;
   },
+
+  getPatient: (id: string) =>
+    apiClient.get<ApiResponse<Patient>>(`${API_BASE_URL}/patients/${id}`),
 
   getPatientById: async (id: string) => {
     const response = await apiClient.get<ApiResponse<Patient>>(
@@ -433,111 +436,129 @@ export interface SystemAnalytics {
 
 // Clinical Notes Services - Fixed
 export const clinicalNotesApi = {
-  getNotes: async (page: number = 1, limit: number = 10, filters?: any) => {
+  // Get all clinical notes
+  getNotes: async (
+    page: number = 1,
+    limit: number = 10,
+    filters?: Record<string, any>
+  ) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
-      ...filters,
+      ...(filters || {}),
     });
 
-    try {
-      const response = await apiClient.get(
-        `${API_BASE_URL}/clinical-notes?${params}`
-      );
-      console.log("Clinical Notes API Response:", response.data);
+    const response = await apiClient.get<
+      ApiResponse<PaginatedResponse<ClinicalNote>>
+    >(`${API_BASE_URL}/clinical-notes?${params}`);
 
-      // Handle the actual backend response structure
-      if (response.data.success) {
-        return response.data; // Return the entire response
-      } else {
-        throw new Error(
-          response.data.error || "Failed to fetch clinical notes"
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching clinical notes:", error);
-      // Return structured mock data for development
-      return {
-        success: true,
-        data: {
-          items: getMockClinicalNotes(),
-          pagination: {
-            page,
-            limit,
-            total: 5,
-            totalPages: 1,
-          },
-        },
-      };
-    }
+    return response.data;
   },
 
-  // Add these mock data functions at the end of the file, before the closing }
+  // Create a new clinical note
+  createNote: async (data: Partial<ClinicalNote>) => {
+    const response = await apiClient.post(
+      `${API_BASE_URL}/clinical-notes`,
+      data
+    );
+    return response.data;
+  },
 
-  // Mock data functions for development
+  // Get a note by ID
+  getNoteById: async (id: string) => {
+    const response = await apiClient.get(
+      `${API_BASE_URL}/clinical-notes/${id}`
+    );
+    return response.data;
+  },
+
+  // Update a note
+  updateNote: async (id: string, data: Partial<ClinicalNote>) => {
+    const response = await apiClient.put(
+      `${API_BASE_URL}/clinical-notes/${id}`,
+      data
+    );
+    return response.data;
+  },
+
+  // Delete a note
+  deleteNote: async (id: string) => {
+    const response = await apiClient.delete(
+      `${API_BASE_URL}/clinical-notes/${id}`
+    );
+    return response.data;
+  },
+
+  // Get notes by patient
+  getNotesByPatient: async (patientId: string, page = 1, limit = 10) => {
+    const response = await apiClient.get(
+      `${API_BASE_URL}/clinical-notes/patient/${patientId}?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  },
 };
 
-const getMockClinicalNotes = (): ClinicalNote[] => {
-  return [
-    {
-      id: "1",
-      patientId: "patient1",
-      clinicianId: "clinician1",
-      type: "clinical",
-      content:
-        "Patient presents with fever and cough for 3 days. Temperature 38.5°C, respiratory rate 22. Suspected respiratory infection.",
-      transcript: "Patient presents with fever and cough for 3 days",
-      summary: "Respiratory infection suspected, recommend chest X-ray and CBC",
-      priority: "high",
-      isSynced: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      patient: {
-        name: "John Doe",
-        patientId: "P001",
-        age: 45,
-        gender: "male",
-      },
-    },
-    {
-      id: "2",
-      patientId: "patient2",
-      clinicianId: "clinician1",
-      type: "procedure",
-      content:
-        "Blood sample collected for CBC and culture. Patient tolerated well.",
-      transcript: "Blood sample collected for CBC and culture",
-      summary: "Routine blood work completed",
-      priority: "medium",
-      isSynced: true,
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      patient: {
-        name: "Sarah Smith",
-        patientId: "P002",
-        age: 32,
-        gender: "female",
-      },
-    },
-    {
-      id: "3",
-      patientId: "patient3",
-      clinicianId: "clinician1",
-      type: "clinical",
-      content:
-        "Follow-up visit for diabetes management. Blood glucose levels stable with current insulin regimen.",
-      transcript: "Follow-up visit for diabetes management",
-      summary: "Diabetes well controlled, continue current treatment",
-      priority: "low",
-      isSynced: true,
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      patient: {
-        name: "Michael Brown",
-        patientId: "P003",
-        age: 58,
-        gender: "male",
-      },
-    },
-  ];
-};
+// const getMockClinicalNotes = (): ClinicalNote[] => {
+//   return [
+//     {
+//       id: "1",
+//       patientId: "patient1",
+//       clinicianId: "clinician1",
+//       type: "clinical",
+//       content:
+//         "Patient presents with fever and cough for 3 days. Temperature 38.5°C, respiratory rate 22. Suspected respiratory infection.",
+//       transcript: "Patient presents with fever and cough for 3 days",
+//       summary: "Respiratory infection suspected, recommend chest X-ray and CBC",
+//       priority: "high",
+//       isSynced: true,
+//       createdAt: new Date().toISOString(),
+//       updatedAt: new Date().toISOString(),
+//       patient: {
+//         name: "John Doe",
+//         patientId: "P001",
+//         age: 45,
+//         gender: "male",
+//       },
+//     },
+//     {
+//       id: "2",
+//       patientId: "patient2",
+//       clinicianId: "clinician1",
+//       type: "procedure",
+//       content:
+//         "Blood sample collected for CBC and culture. Patient tolerated well.",
+//       transcript: "Blood sample collected for CBC and culture",
+//       summary: "Routine blood work completed",
+//       priority: "medium",
+//       isSynced: true,
+//       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+//       updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+//       patient: {
+//         name: "Sarah Smith",
+//         patientId: "P002",
+//         age: 32,
+//         gender: "female",
+//       },
+//     },
+//     {
+//       id: "3",
+//       patientId: "patient3",
+//       clinicianId: "clinician1",
+//       type: "clinical",
+//       content:
+//         "Follow-up visit for diabetes management. Blood glucose levels stable with current insulin regimen.",
+//       transcript: "Follow-up visit for diabetes management",
+//       summary: "Diabetes well controlled, continue current treatment",
+//       priority: "low",
+//       isSynced: true,
+//       createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+//       updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+//       patient: {
+//         name: "Michael Brown",
+//         patientId: "P003",
+//         age: 58,
+//         gender: "male",
+//       },
+//     },
+//   ];
+// };

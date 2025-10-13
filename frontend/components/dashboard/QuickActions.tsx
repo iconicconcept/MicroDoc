@@ -39,7 +39,7 @@ const actions = {
       description: "Create manual clinical note",
       icon: FileText,
       color: "bg-green-500 hover:bg-green-600",
-      href: "/clinical-notes",
+      href: "/clinical-notes/new",
     },
     {
       name: "New Patient",
@@ -106,7 +106,7 @@ const actions = {
       description: "Create new test",
       icon: Zap,
       color: "bg-amber-500 hover:bg-amber-600",
-      href: "/lab-reports",
+      href: "/lab-reports/new",
     },
   ],
 };
