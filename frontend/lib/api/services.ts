@@ -18,7 +18,7 @@ export const authApi = {
   login: async (email: string, password: string) => {
     const response = await apiClient.post<
       ApiResponse<{ user: User; token: string }>
-    >(`${API_BASE_URL}/auth/login`, {
+    >(`/auth/login`, {
       email,
       password,
     });
@@ -111,7 +111,7 @@ export const labReportsApi = {
     reportData: Omit<LabReport, "id" | "createdAt" | "updatedAt">
   ) => {
     const response = await apiClient.post<ApiResponse<LabReport>>(
-      "${API_BASE_URL}/lab-reports",
+      "/lab-reports",
       reportData
     );
     return response.data;
@@ -180,7 +180,7 @@ export const patientsApi = {
     patientData: Omit<Patient, "id" | "createdAt" | "updatedAt">
   ) => {
     const response = await apiClient.post<ApiResponse<Patient>>(
-      "${API_BASE_URL}/patients",
+      `${API_BASE_URL}/patients`,
       patientData
     );
     return response.data;

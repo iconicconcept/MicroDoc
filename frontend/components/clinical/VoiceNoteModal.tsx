@@ -20,7 +20,7 @@ import {
   Mic, 
   Square, 
   Play, 
-  X,
+  // X,
   Save,
   Wand2
 } from 'lucide-react';
@@ -224,7 +224,7 @@ Key points extracted: Patient presentation, symptoms, and recommended follow-up.
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-6 border-t">
+        <div className="flex items-center justify-between pt-6 border-t mb-1">
           <div className="flex space-x-2">
             <Button
               variant="outline"
@@ -245,13 +245,13 @@ Key points extracted: Patient presentation, symptoms, and recommended follow-up.
           </div>
           
           <div className="flex space-x-2">
-            <Button
+            {/* <Button
               variant="outline"
               onClick={onClose}
             >
               <X className="h-4 w-4 mr-2" />
               Cancel
-            </Button>
+            </Button> */}
             <Button
               onClick={handleSave}
               disabled={!transcript.trim() || isLoading}

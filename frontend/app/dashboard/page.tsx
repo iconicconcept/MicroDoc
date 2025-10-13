@@ -76,10 +76,10 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Welcome back, {user.name}!
+                Welcome back, {user.name.split(" ")[0]}!
               </h1>
               <p className="text-gray-600 mt-2">
-                Here&apos;s what&apos;s happening in your practice today.
+                Here&apos;s what&apos;s happening on your dashboard today.
               </p>
             </div>
             <div className="text-right">

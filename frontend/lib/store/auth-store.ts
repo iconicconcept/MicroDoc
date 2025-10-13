@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { User } from '@/types/medical';
 import { authApi } from '@/lib/api/services';
 
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -49,11 +50,11 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const res = await authApi.register(data);
-          if (res?.data.token && res?.data.user) {
-            localStorage.setItem("token", res.data.token);
+          if (res?.token && res?.user) {
+            localStorage.setItem("token", res.token);
             set({
-              user: res.data.user,
-              token: res.data.token,
+              user: res.user,
+              token: res.token,
               isAuthenticated: true,
               isLoading: false,
             });
@@ -114,13 +115,13 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ 
-        user: state.user, 
-        token: state.token,
-        isAuthenticated: state.isAuthenticated 
-      }),
+      // partialize: (state) => ({ 
+      //   user: state.user, 
+      //   token: state.token,
+      //   isAuthenticated: state.isAuthenticated 
+      // }),
     }
   )
 );
 
-useAuthStore.subscribe((state) => console.log("Auth Store:", state));
+//useAuthStore.subscribe((state) => console.log("Auth Store:", state));

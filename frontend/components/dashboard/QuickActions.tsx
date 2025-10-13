@@ -1,18 +1,25 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Mic, 
-  FileText, 
-  Microscope, 
+// import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Mic,
+  FileText,
+  Microscope,
   UserPlus,
   Zap,
-  Stethoscope
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import VoiceNoteModal from '../clinical/VoiceNoteModal';
+  Stethoscope,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import VoiceNoteModal from "../clinical/VoiceNoteModal";
+import VoiceNoteGuideModal from "../clinical/VoiceNoteGuideModal";
 
 interface QuickActionsProps {
   userRole: string;
@@ -21,84 +28,100 @@ interface QuickActionsProps {
 const actions = {
   clinician: [
     {
-      name: 'Voice Note',
-      description: 'Record clinical observations',
+      name: "AI Assist (Voice Note)",
+      description: "Record clinical observations",
       icon: Mic,
-      color: 'bg-blue-500 hover:bg-blue-600',
-      href: '#voice-note'
+      color: "bg-blue-500 hover:bg-blue-600",
+      href: "#voice-note",
     },
     {
-      name: 'Clinical Note',
-      description: 'Create manual clinical note',
+      name: "Clinical Note",
+      description: "Create manual clinical note",
       icon: FileText,
-      color: 'bg-green-500 hover:bg-green-600',
-      href: '/clinical-notes/new'
+      color: "bg-green-500 hover:bg-green-600",
+      href: "/clinical-notes",
     },
     {
-      name: 'New Patient',
-      description: 'Register new patient',
+      name: "New Patient",
+      description: "Register new patient",
       icon: UserPlus,
-      color: 'bg-purple-500 hover:bg-purple-600',
-      href: '/patients/new'
+      color: "bg-purple-500 hover:bg-purple-600",
+      href: "/patients/new",
     },
     {
-      name: 'Quick Lab',
-      description: 'Request lab test',
+      name: "Quick Lab",
+      description: "Save Propose lab test",
       icon: Zap,
-      color: 'bg-amber-500 hover:bg-amber-600',
-      href: '/lab-reports/new'
-    }
+      color: "bg-amber-500 hover:bg-amber-600",
+      href: "/lab-reports/new",
+    },
   ],
   microbiologist: [
     {
-      name: 'Lab Report',
-      description: 'Create microbiology report',
+      name: "AI Assist (Voice Note)",
+      description: "Record microbiology report",
+      icon: Mic,
+      color: "bg-blue-500 hover:bg-blue-600",
+      href: "#voice-note",
+    },
+    {
+      name: "Lab Report",
+      description: "Create microbiology report",
       icon: Microscope,
-      color: 'bg-indigo-500 hover:bg-indigo-600',
-      href: '/lab-reports/new'
+      color: "bg-indigo-500 hover:bg-indigo-600",
+      href: "/lab-reports/new",
     },
     {
-      name: 'Sample Analysis',
-      description: 'Analyze lab samples',
+      name: "Sample Analysis",
+      description: "Analyze lab samples",
       icon: Stethoscope,
-      color: 'bg-pink-500 hover:bg-pink-600',
-      href: '/lab-reports'
+      color: "bg-pink-500 hover:bg-pink-600",
+      href: "/lab-reports",
     },
     {
-      name: 'Culture Results',
-      description: 'Record culture findings',
+      name: "Culture Results",
+      description: "Record culture findings",
       icon: FileText,
-      color: 'bg-teal-500 hover:bg-teal-600',
-      href: '/lab-reports/new?type=culture'
-    }
+      color: "bg-teal-500 hover:bg-teal-600",
+      href: "/lab-reports/new?type=culture",
+    },
   ],
   lab_staff: [
     {
-      name: 'Process Sample',
-      description: 'Handle lab samples',
-      icon: Microscope,
-      color: 'bg-indigo-500 hover:bg-indigo-600',
-      href: '/lab-reports'
+      name: "AI Assist (Voice Note)",
+      description: "Record lab report",
+      icon: Mic,
+      color: "bg-blue-500 hover:bg-blue-600",
+      href: "#voice-note",
     },
     {
-      name: 'Update Status',
-      description: 'Update test status',
+      name: "Lab Analysis",
+      description: "Handle lab samples",
+      icon: Microscope,
+      color: "bg-indigo-500 hover:bg-indigo-600",
+      href: "/lab-reports",
+    },
+    {
+      name: "Create Analysis",
+      description: "Create new test",
       icon: Zap,
-      color: 'bg-amber-500 hover:bg-amber-600',
-      href: '/lab-reports'
-    }
-  ]
+      color: "bg-amber-500 hover:bg-amber-600",
+      href: "/lab-reports",
+    },
+  ],
 };
 
 export default function QuickActions({ userRole }: QuickActionsProps) {
   const router = useRouter();
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
-  
-  const userActions = actions[userRole as keyof typeof actions] || actions.clinician;
+
+  const userActions =
+    actions[userRole as keyof typeof actions] || actions.clinician;
 
   const handleActionClick = (href: string) => {
-    if (href === '#voice-note') {
-      setShowVoiceModal(true);
+    if (href === "#voice-note") {
+      setShowGuideModal(true);
     } else {
       router.push(href);
     }
@@ -129,7 +152,9 @@ export default function QuickActions({ userRole }: QuickActionsProps) {
                   <Icon className="h-6 w-6" />
                   <div>
                     <div className="font-semibold text-sm">{action.name}</div>
-                    <div className="text-xs opacity-90">{action.description}</div>
+                    <div className="text-xs opacity-90">
+                      {action.description}
+                    </div>
                   </div>
                 </button>
               );
@@ -138,7 +163,16 @@ export default function QuickActions({ userRole }: QuickActionsProps) {
         </CardContent>
       </Card>
 
-      <VoiceNoteModal 
+      <VoiceNoteGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+        onProceed={() => {
+          setShowGuideModal(false);
+          setShowVoiceModal(true);
+        }}
+      />
+
+      <VoiceNoteModal
         isOpen={showVoiceModal}
         onClose={() => setShowVoiceModal(false)}
       />
