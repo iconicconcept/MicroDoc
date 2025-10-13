@@ -74,27 +74,34 @@ export const login = async (req, res) => {
 
 export const refresh = async (req, res) => {
   try {
-    const refreshToken =
+    const oldRefreshToken =
       req.cookies?.refreshToken || req.body?.refreshToken || null;
-    if (!refreshToken)
+    if (!oldRefreshToken)
       return res.status(401).json({ error: "No refresh token provided" });
 
-    const decoded = verifyRefreshToken(refreshToken);
+    const decoded = verifyRefreshToken(oldRefreshToken);
     const stored = await redis.get(`refresh:${decoded.userId}`);
-    if (stored !== refreshToken)
-      return res.status(403).json({ error: "Invalid refresh token" });
+    if (stored !== oldRefreshToken)
+      return res.status(403).json({ error: "Invalid or expired refresh token" });
 
-    const newAccess = generateAccessToken({
-      userId: decoded.userId,
-      role: decoded.role,
+    // Rotate tokens
+    const payload = { userId: decoded.userId, role: decoded.role };
+    const newAccessToken = generateAccessToken(payload);
+    const newRefreshToken = generateRefreshToken(payload);
+
+    await redis.set(`refresh:${decoded.userId}`, newRefreshToken, "EX", 7 * 24 * 60 * 60);
+    setAuthCookies(res, newAccessToken, newRefreshToken);
+
+    res.json({
+      success: true,
+      accessToken: newAccessToken,
     });
-    setAuthCookies(res, newAccess, refreshToken);
-    res.json({ success: true, accessToken: newAccess });
   } catch (err) {
     console.error("Refresh error:", err);
     res.status(403).json({ error: "Invalid refresh token" });
   }
 };
+
 
 export const logout = async (req, res) => {
   try {

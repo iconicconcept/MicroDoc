@@ -81,10 +81,10 @@ export default function NewLabReportPage() {
     }
   };
 
-  if (!selectedPatient) {
-    toast.error("Please select a patient");
-    return;
-  }
+  // if (!selectedPatient) {
+  //   toast.error("Please select a patient");
+  //   return;
+  // }
 
   if (!isAuthenticated || !user) return null;
 
