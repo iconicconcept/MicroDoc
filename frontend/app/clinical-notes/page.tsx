@@ -22,6 +22,7 @@ import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
 import NoteDetailsModal from "@/components/clinical/NoteDetailsModal";
 
 import { useRouter } from "next/navigation";
+import DeleteConfirmDialog from "@/components/delete/Delete";
 
 export default function ClinicalNotesPage() {
   const router = useRouter();
@@ -38,7 +39,10 @@ export default function ClinicalNotesPage() {
     if (isAuthenticated) {
       loadNotes();
     }
-  }, [isAuthenticated]);
+    if (!isAuthenticated || !user) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, user, router]);
 
   const loadNotes = async () => {
     try {
@@ -67,14 +71,15 @@ export default function ClinicalNotesPage() {
       note.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleView = (note: ClinicalNote) => {
-    setSelectedNote(note);
-    setIsModalOpen(true);
-  };
+  // const handleView = (note: ClinicalNote) => {
+  //   setSelectedNote(note);
+  //   setIsModalOpen(true);
+  // };
 
   if (!isAuthenticated || !user) {
-    router.push("/login");
-    return null;
+    return (
+      <div className="text-gray-600 text-center mt-10">Redirecting...</div>
+    );
   }
 
   return (
@@ -94,7 +99,7 @@ export default function ClinicalNotesPage() {
               Voice Note
             </Button>
             <Button onClick={() => router.push("/clinical-notes/new")}>
-              <FileText className="h-4 w-4 mr-2" />
+              <FileText className="h-4 w-4 mr-1" />
               New Note
             </Button>
           </div>
@@ -162,7 +167,7 @@ export default function ClinicalNotesPage() {
               <div className="space-y-4">
                 {filteredNotes.map((note) => (
                   <div
-                    key={note.id}
+                    key={note._id}
                     className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-start space-x-4 flex-1 min-w-0">
@@ -185,8 +190,8 @@ export default function ClinicalNotesPage() {
                               {note.patient?.name || "Unknown Patient"}
                             </h3>
                             <p className="text-sm flex gap-2 text-gray-500 capitalize">
-                              {note.type} •{" "}
-                              <Badge
+                              {note.type}
+                              {/* <Badge
                                 className={`text-[6px] p-1.5 rounded-full ${
                                   note.priority === "high"
                                     ? "bg-red-500 text-white"
@@ -196,7 +201,7 @@ export default function ClinicalNotesPage() {
                                 }`}
                               >
                                 {note.priority}
-                              </Badge>
+                              </Badge> */}
                             </p>
                           </div>
                           <div className="text-right text-sm text-gray-500">
@@ -211,24 +216,38 @@ export default function ClinicalNotesPage() {
                           {note.content}
                         </p>
 
+                      <div className="flex gap-2 mt-1">
+                        {/* View Details Button */}
+                        <div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              router.push(`/clinical-notes/${note._id}`)
+                            }
+                            className="mt-1 cursor-pointer shadow-lg shadow-black/10"
+                          >
+                            View Details
+                          </Button>
+                        </div>
+
+                        {/* delete note */}
+                        <div>
+                          <DeleteConfirmDialog
+                            itemName="Lab Report"
+                            onConfirm={async () => {
+                              await clinicalNotesApi.deleteNote(note._id);
+                              router.push("/clinical-notes");
+                            }}
+                          />
+                        </div>
+                      </div>
                         {note.summary && (
                           <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
                             <strong>Summary:</strong> {note.summary}
                           </div>
                         )}
                       </div>
-                    </div>
-
-                    {/* View Details Button */}
-                    <div className="ml-4">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => router.push(`/clinical-notes/${note._id}`)}
-                        className="mt-1 cursor-pointer"
-                      >
-                        View Details
-                      </Button>
                     </div>
                   </div>
                 ))}

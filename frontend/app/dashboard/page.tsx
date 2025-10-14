@@ -9,6 +9,7 @@ import StatsOverview from '@/components/dashboard/StatsOverview';
 import BurnoutAlert from '@/components/dashboard/BurnoutAlert';
 import { analyticsApi } from '@/lib/api/services';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 interface DashboardStats {
   overview: {
@@ -37,6 +38,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +47,10 @@ export default function DashboardPage() {
     if (isAuthenticated) {
       loadDashboardStats();
     }
-  }, [isAuthenticated]);
+    if (!isAuthenticated || !user) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, user, router]);
 
   const loadDashboardStats = async () => {
     try {
@@ -55,17 +60,15 @@ export default function DashboardPage() {
         setStats(response.data);
       }
     } catch (error) {
-      toast.error('Failed to load dashboard statistics');
+      toast.error('Failed to load dashboard statistics, pls refresh the page.');
+      console.error('Error fetching dashboard stats:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   if (!isAuthenticated || !user) {
-    return 
-    (<div className="flex items-center justify-center h-screen">
-      <p className="text-gray-500">Loading dashboard...</p>
-    </div>)
+    return <div className="text-gray-600 text-center mt-10">Redirecting...</div>;
   }
 
   return (

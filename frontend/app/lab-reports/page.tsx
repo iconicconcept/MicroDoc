@@ -22,10 +22,14 @@ import {
   Calendar,
   Filter,
   Microscope,
+  Delete,
+  DeleteIcon,
+  Trash,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
 import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
+import DeleteConfirmDialog from "@/components/delete/Delete";
 
 export default function LabReportsPage() {
   const router = useRouter();
@@ -40,7 +44,10 @@ export default function LabReportsPage() {
     if (isAuthenticated) {
       loadReports();
     }
-  }, [isAuthenticated]);
+    if (!isAuthenticated || !user) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, user, router]);
 
   const loadReports = async () => {
     try {
@@ -50,7 +57,7 @@ export default function LabReportsPage() {
       }
     } catch (error) {
       toast.error("Failed to load lab reports");
-      console.error("Failed to load lab reports", error);  
+      console.error("Failed to load lab reports", error);
     } finally {
       setIsLoading(false);
     }
@@ -63,8 +70,9 @@ export default function LabReportsPage() {
   );
 
   if (!isAuthenticated || !user) {
-    router.push("/login");
-    return null;
+    return (
+      <div className="text-gray-600 text-center mt-10">Redirecting...</div>
+    );
   }
 
   return (
@@ -78,13 +86,13 @@ export default function LabReportsPage() {
               Manage and review laboratory test results
             </p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-col md:flex-row gap-2 space-x-3">
             <Button variant="outline" onClick={() => setShowGuideModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Voice Note
             </Button>
             <Button onClick={() => router.push("/lab-reports/new")}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-1" />
               New Report
             </Button>
           </div>
@@ -167,17 +175,45 @@ export default function LabReportsPage() {
                           <p className="text-sm text-gray-500 capitalize">
                             {report.testType} • {report.status}
                           </p>
+                          <p className="mt-1 text-gray-700 text-sm line-clamp-2">
+                            {report.resultSummary}
+                          </p>
                         </div>
-                        <div className="text-right text-sm text-gray-500">
+                        <div className="text-right text-sm flex flex-col gap-2 text-gray-500">
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-3 w-3" />
                             <span>{formatDate(report.createdAt)}</span>
                           </div>
+                          <div className="flex flex-col md:flex-row gap-2">
+                            {/* View Details Button */}
+                            <div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  router.push(
+                                    `/lab-reports/${report._id || report.id}`
+                                  )
+                                }
+                                className="mt-1 cursor-pointer"
+                              >
+                                View Details
+                              </Button>
+                            </div>
+
+                            {/* delete labReport */}
+                            <div>
+                              <DeleteConfirmDialog
+                                itemName="Lab Report"
+                                onConfirm={async () => {
+                                  await labReportsApi.deleteReport(report._id);
+                                  router.push("/lab-reports");
+                                }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <p className="text-gray-700 text-sm line-clamp-2">
-                        {report.resultSummary}
-                      </p>
                     </div>
                   </div>
                 ))}

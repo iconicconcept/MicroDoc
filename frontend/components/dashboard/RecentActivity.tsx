@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { ClinicalNote, LabReport } from "@/types/medical";
 import { formatDate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 interface ActivityItem {
@@ -22,48 +23,34 @@ interface ActivityItem {
 export default function RecentActivity() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false); // 👈 toggle for showing more
 
   useEffect(() => {
     loadRecentActivity();
-  }, []);
+  }, [showAll]);
 
   const loadRecentActivity = async () => {
     try {
-      console.log("Loading recent activity...");
+      setIsLoading(true);
+
+      const limit = showAll ? 50 : 5; // 👈 load more when "show more" clicked
 
       const [notesResponse, reportsResponse] = await Promise.all([
-        clinicalNotesApi.getNotes(1, 5),
-        labReportsApi.getReports(1, 5),
+        clinicalNotesApi.getNotes(1, limit),
+        labReportsApi.getReports(1, limit),
       ]);
-
-      console.log("Notes API Response:", notesResponse);
-      console.log("Reports API Response:", reportsResponse);
 
       const noteActivities: ActivityItem[] = [];
       const reportActivities: ActivityItem[] = [];
 
       // Handle clinical notes response
       if (notesResponse.success) {
-        let notes: ClinicalNote[] = [];
+        const notes: ClinicalNote[] =
+          notesResponse.data?.data?.items ||
+          notesResponse.data?.items ||
+          (Array.isArray(notesResponse.data) ? notesResponse.data : []);
 
-        // Try different response structures
-        if (notesResponse.data?.data?.items) {
-          notes = notesResponse.data.data.items;
-        } else if (notesResponse.data?.items) {
-          notes = notesResponse.data.items;
-        } else if (Array.isArray(notesResponse.data)) {
-          notes = notesResponse.data;
-        } else {
-          console.warn(
-            "Unexpected clinical notes response structure:",
-            notesResponse
-          );
-          toast.error("Could not fetch recent notes");
-        }
-
-        console.log("Processing clinical notes:", notes);
-
-        notes.forEach((note: ClinicalNote) => {
+        notes.forEach((note) => {
           noteActivities.push({
             id: note._id,
             type: "clinical_note",
@@ -78,33 +65,16 @@ export default function RecentActivity() {
             color: "text-green-600",
           });
         });
-      } else {
-        console.warn("Clinical notes API call failed, using mock data");
-        // noteActivities.push(...getMockClinicalNoteActivities());
       }
 
       // Handle lab reports response
       if (reportsResponse.success) {
-        let reports: LabReport[] = [];
+        const reports: LabReport[] =
+          reportsResponse.data?.data?.items ||
+          reportsResponse.data?.items ||
+          (Array.isArray(reportsResponse.data) ? reportsResponse.data : []);
 
-        // Try different response structures
-        if (reportsResponse.data?.data?.items) {
-          reports = reportsResponse.data.data.items;
-        } else if (reportsResponse.data?.items) {
-          reports = reportsResponse.data.items;
-        } else if (Array.isArray(reportsResponse.data)) {
-          reports = reportsResponse.data;
-        } else {
-          console.warn(
-            "Unexpected lab reports response structure:",
-            reportsResponse
-          );
-          toast.error("Could not fetch recent lab reports");
-        }
-
-        console.log("Processing lab reports:", reports);
-
-        reports.forEach((report: LabReport) => {
+        reports.forEach((report) => {
           reportActivities.push({
             id: report.id,
             type: "lab_report",
@@ -119,42 +89,46 @@ export default function RecentActivity() {
             color: "text-purple-600",
           });
         });
-      } else {
-        console.warn("Lab reports API call failed, using mock data");
-        toast.error("Could not fetch recent lab report activities");
       }
 
-      // Combine and sort activities
-      const allActivities = [...noteActivities, ...reportActivities]
-        .sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        )
-        .slice(0, 6);
+      // Combine and sort activities by date
+      const allActivities = [...noteActivities, ...reportActivities].sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
 
-      console.log("Final activities to display:", allActivities);
       setActivities(allActivities);
     } catch (error) {
       console.error("Failed to load recent activity:", error);
-      // Use mock data as fallback
-      console.log("Using fallback mock data due to error");
-      // setActivities(getMockActivities());
+      toast.error("Failed to load recent activity");
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5 text-gray-600" />
             <span>Recent Activity</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {[...Array(4)].map((_, i) => (
+          </div>
+          {activities.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAll((prev) => !prev)}
+            >
+              {showAll ? "Show Less" : "Show More"}
+            </Button>
+          )}
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          [...Array(5)].map((_, i) => (
             <div key={i} className="flex items-center space-x-4">
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="space-y-2 flex-1">
@@ -162,22 +136,8 @@ export default function RecentActivity() {
                 <Skeleton className="h-3 w-1/2" />
               </div>
             </div>
-          ))}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Calendar className="h-5 w-5 text-gray-600" />
-          <span>Recent Activity</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {activities.length === 0 ? (
+          ))
+        ) : activities.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Activity className="h-12 w-12 mx-auto mb-3 text-gray-300" />
             <p>No recent activity</p>

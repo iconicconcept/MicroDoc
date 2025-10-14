@@ -16,6 +16,7 @@ import clinicalNotesRoutes from "./routes/clinicalNotes.route.js";
 import labReportsRoutes from "./routes/labReports.route.js";
 import burnoutRoutes from "./routes/burnout.route.js";
 import patientsRoutes from "./routes/patients.route.js";
+import analyticsRoutes from "./routes/analytics.route.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -59,6 +60,7 @@ app.use("/api/clinical-notes", clinicalNotesRoutes);
 app.use("/api/lab-reports", labReportsRoutes);
 app.use("/api/burnout", burnoutRoutes);
 app.use("/api/patients", patientsRoutes);
+app.use("/api/analytics", analyticsRoutes)
 
 // Health check
 app.get("/api/health", (req, res) => {

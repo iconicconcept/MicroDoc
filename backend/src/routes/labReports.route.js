@@ -18,19 +18,25 @@ const router = express.Router();
 router.use(authenticate);
 
 const labReportValidation = [
-  body('sampleId').notEmpty().trim().withMessage('Sample ID is required'),
-  body('patientId').notEmpty().withMessage('Patient ID is required'),
-  body('testType').isIn(['gram_stain', 'culture_sensitivity', 'pcr', 'antigen', 'other']).withMessage('Valid test type is required'),
-  body('results').notEmpty().trim().withMessage('Results are required'),
-  body('findings').notEmpty().trim().withMessage('Findings are required'),
-  body('pathogen').optional().trim(),
-  body('antibioticSensitivity').optional().isArray(),
-  body('status').optional().isIn(['pending', 'completed', 'cancelled'])
+  body("sampleId").notEmpty().withMessage("Sample ID is required"),
+  body("patientId").notEmpty().withMessage("Patient ID is required"),
+  body("testType").notEmpty().withMessage("Test type is required"),
+  body("specimenType").notEmpty().withMessage("Specimen type is required"),
+  body("testDate").notEmpty().isISO8601().withMessage("Valid test date required"),
+  body("requestedBy").notEmpty().withMessage("Requested by is required"),
+  body("resultSummary").notEmpty().withMessage("Result summary is required"),
+  body("pathogen").optional().trim(),
+  body("antibioticSensitivity").optional().isArray(),
+  body("remarks").optional().trim(),
+  body("status").optional().isIn(["pending", "completed", "reviewed", "cancelled"]),
 ];
+
 
 const updateLabReportValidation = [
   body('sampleId').optional().notEmpty().trim(),
-  body('testType').optional().isIn(['gram_stain', 'culture_sensitivity', 'pcr', 'antigen', 'other']),
+  body("patientId").optional().notEmpty().trim(),
+  body('testType').optional().notEmpty().trim(),
+  body("specimenType").optional().notEmpty().trim(),
   body('results').optional().notEmpty().trim(),
   body('findings').optional().notEmpty().trim(),
   body('pathogen').optional().trim(),

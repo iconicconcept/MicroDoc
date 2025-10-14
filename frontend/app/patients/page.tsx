@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
 import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
+import DeleteConfirmDialog from "@/components/delete/Delete";
 
 type Patient = {
   _id: string;
@@ -98,7 +99,7 @@ export default function PatientsPage() {
               Voice Search
             </Button>
             <Button onClick={() => router.push("/patients/new")}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-1" />
               New Patient
             </Button>
           </div>
@@ -170,7 +171,7 @@ export default function PatientsPage() {
                   <div
                     key={p._id}
                     className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/patients/${p._id}`)}
+                    // onClick={() => router.push(`/patients/${p._id}`)}
                   >
                     <div className="p-3 rounded-full bg-blue-50 text-blue-600">
                       <UserRound className="h-5 w-5" />
@@ -193,19 +194,34 @@ export default function PatientsPage() {
                             <Calendar className="h-3 w-3" />
                             <span>{formatDate(p.createdAt)}</span>
                           </div>
+
+                          <div className="flex flex-col md:flex-row gap-2 mt-1">
+                            {/* view patient details */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/patients/${p._id}`)}
+                              className="mt-1 cursor-pointer shadow-lg shadow-black/10"
+                            >
+                              View Details
+                            </Button>
+
+                            {/* delete patient */}
+                            <div>
+                              <DeleteConfirmDialog
+                                itemName="Lab Report"
+                                onConfirm={async () => {
+                                  await patientsApi.deletePatient(p._id);
+                                  router.push("/patients");
+                                }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <p className="text-gray-700 text-sm">
                         {p.contact} • {p.address || "No address provided"}
                       </p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => router.push(`/patients/${p._id}`)}
-                        className="mt-1 cursor-pointer"
-                      >
-                        View Details
-                      </Button>
                       {p.assignedClinician && (
                         <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
                           <strong>Clinician:</strong> {p.assignedClinician}

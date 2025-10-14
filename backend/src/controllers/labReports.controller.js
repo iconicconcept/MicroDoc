@@ -87,11 +87,14 @@ export const createLabReport = async (req, res)=> {
       sampleId,
       patientId,
       testType,
+      specimenType,
+      testDate,
+      requestedBy,
+      resultSummary,
       pathogen,
-      results,
       antibioticSensitivity,
-      findings,
-      status
+      remarks,
+      status,
     } = req.body;
 
     // Verify patient exists
@@ -119,13 +122,15 @@ export const createLabReport = async (req, res)=> {
       patientId,
       microbiologistId: req.user?.userId,
       testType,
+      specimenType,
+      testDate,
+      requestedBy,
+      resultSummary,
       pathogen,
-      results,
       antibioticSensitivity: antibioticSensitivity || [],
-      findings,
-      status: status || 'pending',
-      aiSuggestions: [],
-      isSynced: true
+      remarks,
+      status: status || "pending",
+      isSynced: true,
     });
 
     await report.populate('patientId', 'name patientId age gender');
@@ -146,7 +151,38 @@ export const createLabReport = async (req, res)=> {
 export const updateLabReport = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+
+    const {
+      sampleId,
+      patientId,
+      microbiologistId,
+      testType,
+      specimenType,
+      testDate,
+      requestedBy,
+      resultSummary,
+      pathogen,
+      antibioticSensitivity,
+      remarks,
+      status,
+      isSynced,
+    } = req.body;
+
+    const updateData = {
+      sampleId,
+      patientId,
+      microbiologistId,
+      testType,
+      specimenType,
+      testDate,
+      requestedBy,
+      resultSummary,
+      pathogen,
+      antibioticSensitivity,
+      remarks,
+      status,
+      isSynced,
+    };
 
     const report = await LabReport.findOneAndUpdate(
       { _id: id, microbiologistId: req.user?.userId },
@@ -164,6 +200,7 @@ export const updateLabReport = async (req, res) => {
 
     res.json({
       success: true,
+      message: "Lab Report updated successfully",
       data: report
     });
   } catch (error) {
