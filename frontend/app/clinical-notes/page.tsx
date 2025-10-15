@@ -17,8 +17,6 @@ import { ClinicalNote } from "@/types/medical";
 import { formatDate } from "@/lib/utils";
 import { Plus, Search, FileText, Calendar, Filter, Badge } from "lucide-react";
 import { toast } from "sonner";
-import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
-import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
 import NoteDetailsModal from "@/components/clinical/NoteDetailsModal";
 
 import { useRouter } from "next/navigation";
@@ -30,8 +28,6 @@ export default function ClinicalNotesPage() {
   const [notes, setNotes] = useState<ClinicalNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const [showGuideModal, setShowGuideModal] = useState(false);
   const [selectedNote, setSelectedNote] = useState<ClinicalNote | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -86,18 +82,14 @@ export default function ClinicalNotesPage() {
     <DashboardLayout user={user}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Clinical Notes</h1>
             <p className="text-gray-600 mt-2">
               Manage and review patient clinical documentation
             </p>
           </div>
-          <div className="flex flex-col md:flex-row space-x-3">
-            <Button variant="outline" onClick={() => setShowGuideModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Voice Note
-            </Button>
+          <div className="flex space-x-3">
             <Button onClick={() => router.push("/clinical-notes/new")}>
               <FileText className="h-4 w-4 mr-1" />
               New Note
@@ -256,20 +248,6 @@ export default function ClinicalNotesPage() {
           </CardContent>
         </Card>
       </div>
-
-      <VoiceNoteGuideModal
-        isOpen={showGuideModal}
-        onClose={() => setShowGuideModal(false)}
-        onProceed={() => {
-          setShowGuideModal(false);
-          setShowVoiceModal(true);
-        }}
-      />
-
-      <VoiceNoteModal
-        isOpen={showVoiceModal}
-        onClose={() => setShowVoiceModal(false)}
-      />
 
       <NoteDetailsModal
         open={isModalOpen}

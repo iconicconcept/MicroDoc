@@ -99,3 +99,36 @@ async function startServer() {
 }
 
 startServer();
+
+
+{/*
+  
+Auth middleware error: TokenExpiredError: jwt expired
+    at C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\jsonwebtoken\verify.js:190:21
+    at getSecret (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\jsonwebtoken\verify.js:97:14)
+    at module.exports [as verify] (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\jsonwebtoken\verify.js:101:10)
+    at authenticate (file:///C:/Users/LENOVO/Desktop/MicroDoc_AI/backend/src/middleware/auth.js:17:25)
+    at Layer.handleRequest (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\lib\layer.js:152:17)      
+    at trimPrefix (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:342:13)
+    at C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:297:9
+    at processParams (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:582:12)
+    at next (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:291:5)
+    at Function.handle (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:186:3) {
+  expiredAt: 2025-10-15T09:25:57.000Z
+}
+Auth middleware error: TokenExpiredError: jwt expired
+    at C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\jsonwebtoken\verify.js:190:21
+    at getSecret (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\jsonwebtoken\verify.js:97:14)
+    at module.exports [as verify] (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\jsonwebtoken\verify.js:101:10)
+    at authenticate (file:///C:/Users/LENOVO/Desktop/MicroDoc_AI/backend/src/middleware/auth.js:17:25)
+    at Layer.handleRequest (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\lib\layer.js:152:17)      
+    at trimPrefix (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:342:13)
+    at C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:297:9
+    at processParams (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:582:12)
+    at next (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:291:5)
+    at Function.handle (C:\Users\LENOVO\Desktop\MicroDoc_AI\backend\node_modules\router\index.js:186:3) {
+  expiredAt: 2025-10-15T09:25:57.000Z
+}
+  
+  
+*/}

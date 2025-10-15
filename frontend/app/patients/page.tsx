@@ -14,11 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { patientsApi } from "@/lib/api/services";
 import { toast } from "sonner";
-import { Plus, Search, UserRound, Calendar, Filter, Mic } from "lucide-react";
+import { Plus, Search, UserRound, Calendar, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/utils";
-import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
-import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
 import DeleteConfirmDialog from "@/components/delete/Delete";
 
 type Patient = {
@@ -41,8 +39,6 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const [showGuideModal, setShowGuideModal] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -86,18 +82,14 @@ export default function PatientsPage() {
     <DashboardLayout user={user}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3 justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Patients</h1>
             <p className="text-gray-600 mt-2">
               Manage and onboard patients for your facility
             </p>
           </div>
-          <div className="flex flex-col md:flex-row gap-2 space-x-3">
-            <Button variant="outline" onClick={() => setShowGuideModal(true)}>
-              <Mic className="h-4 w-4 mr-2" />
-              Voice Search
-            </Button>
+          <div className="flex space-x-3">
             <Button onClick={() => router.push("/patients/new")}>
               <Plus className="h-4 w-4 mr-1" />
               New Patient
@@ -235,21 +227,6 @@ export default function PatientsPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Voice Modals */}
-      <VoiceNoteGuideModal
-        isOpen={showGuideModal}
-        onClose={() => setShowGuideModal(false)}
-        onProceed={() => {
-          setShowGuideModal(false);
-          setShowVoiceModal(true);
-        }}
-      />
-
-      <VoiceNoteModal
-        isOpen={showVoiceModal}
-        onClose={() => setShowVoiceModal(false)}
-      />
     </DashboardLayout>
   );
 }

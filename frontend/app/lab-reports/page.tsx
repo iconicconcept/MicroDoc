@@ -37,9 +37,7 @@ export default function LabReportsPage() {
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const [showGuideModal, setShowGuideModal] = useState(false);
-
+  
   useEffect(() => {
     if (isAuthenticated) {
       loadReports();
@@ -86,13 +84,9 @@ export default function LabReportsPage() {
               Manage and review laboratory test results
             </p>
           </div>
-          <div className="flex flex-col md:flex-row gap-2 space-x-3">
-            <Button variant="outline" onClick={() => setShowGuideModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Voice Note
-            </Button>
+          <div className="flex gap-2 space-x-3">
             <Button onClick={() => router.push("/lab-reports/new")}>
-              <Plus className="h-4 w-4 mr-1" />
+              <Plus className="h-4 w-4" />
               New Report
             </Button>
           </div>
@@ -152,7 +146,7 @@ export default function LabReportsPage() {
                     : "Start by creating your first lab report"}
                 </p>
                 <Button onClick={() => router.push("/lab-reports/new")}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 mr-1" />
                   Create Report
                 </Button>
               </div>
@@ -170,7 +164,7 @@ export default function LabReportsPage() {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <h3 className="font-medium text-gray-900">
-                            {report.patient?.name || "Unknown Patient"}
+                            {report?.name || "Unknown Patient"}
                           </h3>
                           <p className="text-sm text-gray-500 capitalize">
                             {report.testType} • {report.status}
@@ -222,20 +216,6 @@ export default function LabReportsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <VoiceNoteGuideModal
-        isOpen={showGuideModal}
-        onClose={() => setShowGuideModal(false)}
-        onProceed={() => {
-          setShowGuideModal(false);
-          setShowVoiceModal(true);
-        }}
-      />
-
-      <VoiceNoteModal
-        isOpen={showVoiceModal}
-        onClose={() => setShowVoiceModal(false)}
-      />
     </DashboardLayout>
   );
 }
