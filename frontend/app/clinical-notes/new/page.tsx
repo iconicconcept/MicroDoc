@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { clinicalNotesApi, patientsApi } from "@/lib/api/services";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+// import {
+//   Mic,
+//   MicOff,
+//   Sparkles,
+//   Send,
+//   Loader2,
+//   CheckCircle,
+// } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -31,20 +39,203 @@ export default function NewClinicalNotePage() {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // AI Voice Features
+  // const [isRecording, setIsRecording] = useState(false);
+  // const [isAIMode, setIsAIMode] = useState(false);
+  // const [conversation, setConversation] = useState([]);
+  // const [currentQuestion, setCurrentQuestion] = useState("");
+  // const [userInput, setUserInput] = useState("");
+  // const [isProcessing, setIsProcessing] = useState(false);
+  // const [currentStep, setCurrentStep] = useState(0);
+  // const [extractedData, setExtractedData] = useState({});
+  //const [askNextQuestion, setAskNextQuestion] = useState({})
+
+  // const mediaRecorderRef = useRef(null);
+  // const audioChunksRef = useRef([]);
+  // const conversationEndRef = useRef(null);
+
+  // const conversationFlow = [
+  //   {
+  //     field: "patient",
+  //     question:
+  //       "Which patient is this clinical note for? Please provide the patient name or ID.",
+  //     extract: (text: string) => {
+  //       const patient = patients.find(
+  //         (p) =>
+  //           text.toLowerCase().includes(p.name.toLowerCase()) ||
+  //           text.toLowerCase().includes(p.patientId.toLowerCase())
+  //       );
+  //       return patient?._id || null;
+  //     },
+  //   },
+  //   {
+  //     field: "chiefComplaint",
+  //     question:
+  //       "What is the patient's chief complaint? What brings them in today?",
+  //     extract: (text: string) => text,
+  //   },
+  //   {
+  //     field: "diagnosis",
+  //     question: "What is your diagnosis or assessment?",
+  //     extract: (text: string) => text,
+  //   },
+  //   {
+  //     field: "plan",
+  //     question: "What is the treatment plan or recommendations?",
+  //     extract: (text: string) => text,
+  //   },
+  //   {
+  //     field: "type",
+  //     question: "What type of note is this? (Clinical, Lab, or Procedure)",
+  //     extract: (text: string) => {
+  //       const lower = text.toLowerCase();
+  //       if (lower.includes("lab")) return "lab";
+  //       if (lower.includes("procedure")) return "procedure";
+  //       return "clinical";
+  //     },
+  //   },
+  //   {
+  //     field: "priority",
+  //     question: "What is the priority level? (Low, Medium, or High)",
+  //     extract: (text: string) => {
+  //       const lower = text.toLowerCase();
+  //       if (lower.includes("high") || lower.includes("urgent")) return "high";
+  //       if (lower.includes("low")) return "low";
+  //       return "medium";
+  //     },
+  //   },
+  //   {
+  //     field: "content",
+  //     question:
+  //       "Please provide the detailed clinical note including findings, observations, and any additional information.",
+  //     extract: (text: string) => text,
+  //   },
+  // ];
+
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const res = await patientsApi.getPatients(1, 50);
-        if (res.success) setPatients(res.data.items || []);
-      } catch (err) {
-        toast.error("Failed to load patients");
-        console.error("Failed to load patients", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchPatients();
-  }, []);
+    if (conversationEndRef.current) {
+      conversationEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [conversation]);
+
+  const fetchPatients = async () => {
+    try {
+      const res = await patientsApi.getPatients(1, 50);
+      if (res.success) setPatients(res.data.items || []);
+    } catch (err) {
+      toast.error("Failed to load patients");
+      console.error("Failed to load patients", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // const startAIMode = () => {
+  //   setIsAIMode(true);
+  //   setCurrentStep(0);
+  //   setConversation([]);
+  //   setExtractedData({});
+  //   askNextQuestion(0);
+  // };
+
+  // const askNextQuestion = (step) => {
+  //   if (step < conversationFlow.length) {
+  //     const question = conversationFlow[step].question;
+  //     setCurrentQuestion(question);
+  //     setConversation((prev) => [...prev, { type: "ai", text: question }]);
+  //   } else {
+  //     // All questions answered, apply data
+  //     applyExtractedData();
+  //     setConversation((prev) => [
+  //       ...prev,
+  //       {
+  //         type: "ai",
+  //         text: "✅ All information collected! I've filled in the form for you. Please review and submit when ready.",
+  //       },
+  //     ]);
+  //     setIsAIMode(false);
+  //   }
+  // };
+
+  // const handleUserResponse = async (response) => {
+  //   if (!response.trim()) return;
+
+  //   setConversation((prev) => [...prev, { type: "user", text: response }]);
+  //   setUserInput("");
+  //   setIsProcessing(true);
+
+  //   // Simulate AI processing
+  //   await new Promise((resolve) => setTimeout(resolve, 800));
+
+  //   const currentFlow = conversationFlow[currentStep];
+  //   const extractedValue = currentFlow.extract(response);
+
+  //   setExtractedData((prev) => ({
+  //     ...prev,
+  //     [currentFlow.field]: extractedValue,
+  //   }));
+
+  //   setIsProcessing(false);
+  //   setCurrentStep(currentStep + 1);
+  //   askNextQuestion(currentStep + 1);
+  // };
+
+  // const applyExtractedData = () => {
+  //   if (extractedData.patient) setSelectedPatient(extractedData.patient);
+  //   if (extractedData.chiefComplaint)
+  //     setChiefComplaint(extractedData.chiefComplaint);
+  //   if (extractedData.diagnosis) setDiagnosis(extractedData.diagnosis);
+  //   if (extractedData.plan) setPlan(extractedData.plan);
+  //   if (extractedData.type) setType(extractedData.type);
+  //   if (extractedData.priority) setPriority(extractedData.priority);
+  //   if (extractedData.content) setContent(extractedData.content);
+  // };
+
+  // const startRecording = async () => {
+  //   try {
+  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  //     mediaRecorderRef.current = new MediaRecorder(stream);
+  //     audioChunksRef.current = [];
+
+  //     mediaRecorderRef.current.ondataavailable = (event) => {
+  //       audioChunksRef.current.push(event.data);
+  //     };
+
+  //     mediaRecorderRef.current.onstop = async () => {
+  //       const audioBlob = new Blob(audioChunksRef.current, {
+  //         type: "audio/wav",
+  //       });
+  //       await processAudio(audioBlob);
+  //       stream.getTracks().forEach((track) => track.stop());
+  //     };
+
+  //     mediaRecorderRef.current.start();
+  //     setIsRecording(true);
+  //   } catch (error) {
+  //     console.error("Microphone access denied:", error);
+  //     alert("Please allow microphone access to use voice input");
+  //   }
+  // };
+
+  // const stopRecording = () => {
+  //   if (mediaRecorderRef.current && isRecording) {
+  //     mediaRecorderRef.current.stop();
+  //     setIsRecording(false);
+  //   }
+  // };
+
+  // const processAudio = async (audioBlob) => {
+  //   setIsProcessing(true);
+
+  //   // Simulate transcription (replace with actual API call to your backend)
+  //   await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  //   // Mock transcription result
+  //   const mockTranscription = "Patient has fever and cough for the past 3 days";
+
+  //   handleUserResponse(mockTranscription);
+  // };
 
   const handleSubmit = async () => {
     if (!selectedPatient) {
@@ -56,7 +247,7 @@ export default function NewClinicalNotePage() {
       alert("Note content cannot be empty.");
       return;
     }
-    if ( !chiefComplaint || !diagnosis) {
+    if (!chiefComplaint || !diagnosis) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -108,6 +299,9 @@ export default function NewClinicalNotePage() {
       <div className="max-w-2xl mx-auto py-10">
         <Card>
           <CardHeader>
+            <p className="text-gray-600 text-sm">
+              AI-powered documentation for healthcare professionals
+            </p>
             <CardTitle>Create New Clinical Note</CardTitle>
           </CardHeader>
 

@@ -17,6 +17,8 @@ import labReportsRoutes from "./routes/labReports.route.js";
 import burnoutRoutes from "./routes/burnout.route.js";
 import patientsRoutes from "./routes/patients.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
+import voiceLabRoutes from "./routes/voiceLab.routes.js";
+import settingsRoutes from "./routes/settings.route.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -60,7 +62,9 @@ app.use("/api/clinical-notes", clinicalNotesRoutes);
 app.use("/api/lab-reports", labReportsRoutes);
 app.use("/api/burnout", burnoutRoutes);
 app.use("/api/patients", patientsRoutes);
-app.use("/api/analytics", analyticsRoutes)
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/voice", voiceLabRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
