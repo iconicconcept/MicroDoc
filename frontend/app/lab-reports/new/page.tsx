@@ -3,14 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { labReportsApi, patientsApi } from "@/lib/api/services";
+import { labReportsApi, patientsApi, transcribeAndExtract } from "@/lib/api/services";
 import { toast } from "sonner";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,7 +41,9 @@ export default function NewLabReportPage() {
   // === AI INTERVIEW STATES ===
   const [isRecording, setIsRecording] = useState(false);
   const [isAIMode, setIsAIMode] = useState(false);
-  const [conversation, setConversation] = useState<{ type: string; text: string }[]>([]);
+  const [conversation, setConversation] = useState<
+    { type: string; text: string }[]
+  >([]);
   const [userInput, setUserInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -106,7 +103,8 @@ export default function NewLabReportPage() {
     },
     {
       field: "status",
-      question: "Status of report? (Pending, Completed, Reviewed, or Cancelled)",
+      question:
+        "Status of report? (Pending, Completed, Reviewed, or Cancelled)",
       extract: (text: string) => {
         const lower = text.toLowerCase();
         if (lower.includes("review")) return "reviewed";
@@ -151,7 +149,10 @@ export default function NewLabReportPage() {
       setIsAIMode(false);
       setConversation((prev) => [
         ...prev,
-        { type: "ai", text: "✅ Lab report ready. I've filled in the form for you!" },
+        {
+          type: "ai",
+          text: "✅ Lab report ready. I've filled in the form for you!",
+        },
       ]);
     }
   };
@@ -195,7 +196,9 @@ export default function NewLabReportPage() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/wav",
+        });
         await processAudio(audioBlob);
         stream.getTracks().forEach((t) => t.stop());
       };
@@ -216,14 +219,34 @@ export default function NewLabReportPage() {
 
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    const mockTranscription = "Blood test requested by Dr. James, results normal.";
-    handleUserResponse(mockTranscription);
+    try {
+      const result = await transcribeAndExtract.fromAudio(audioBlob);
+      if (result.success) {
+        const transcription = result.data.transcription || "";
+        handleUserResponse(transcription);
+        setExtractedData((prev: any) => ({
+          ...prev,
+          ...result.data.extractedData,
+        }));
+      } else {
+        toast.error(result.message || "Failed to process audio");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error sending audio to backend");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // === SUBMIT FORM ===
   const handleSubmit = async () => {
-    if (!selectedPatient || !form.testType || !form.resultSummary || !form.specimenType)
+    if (
+      !selectedPatient ||
+      !form.testType ||
+      !form.resultSummary ||
+      !form.specimenType
+    )
       return toast.error("Please fill all required fields");
 
     setLoading(true);
@@ -287,7 +310,9 @@ export default function NewLabReportPage() {
                   conversation.map((msg, i) => (
                     <div
                       key={i}
-                      className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+                      className={`flex ${
+                        msg.type === "user" ? "justify-end" : "justify-start"
+                      }`}
                     >
                       <div
                         className={`px-3 py-2 rounded-lg ${
@@ -301,7 +326,9 @@ export default function NewLabReportPage() {
                     </div>
                   ))
                 )}
-                {isProcessing && <p className="text-sm text-gray-500">Processing...</p>}
+                {isProcessing && (
+                  <p className="text-sm text-gray-500">Processing...</p>
+                )}
                 <div ref={conversationEndRef} />
               </div>
 
@@ -312,12 +339,17 @@ export default function NewLabReportPage() {
                       type="text"
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleUserResponse(userInput)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleUserResponse(userInput)
+                      }
                       className="flex-1 border rounded-lg px-3 py-2"
                       placeholder="Type your response..."
                       disabled={isProcessing}
                     />
-                    <Button onClick={() => handleUserResponse(userInput)} disabled={!userInput.trim() || isProcessing}>
+                    <Button
+                      onClick={() => handleUserResponse(userInput)}
+                      disabled={!userInput.trim() || isProcessing}
+                    >
                       Send
                     </Button>
                   </div>
@@ -342,8 +374,13 @@ export default function NewLabReportPage() {
           <CardContent className="space-y-6">
             {/* Select Patient */}
             <div>
-              <label className="text-sm font-medium block mb-2">Select Patient</label>
-              <Select value={selectedPatient} onValueChange={setSelectedPatient}>
+              <label className="text-sm font-medium block mb-2">
+                Select Patient
+              </label>
+              <Select
+                value={selectedPatient}
+                onValueChange={setSelectedPatient}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a patient" />
                 </SelectTrigger>
@@ -359,14 +396,53 @@ export default function NewLabReportPage() {
 
             {/* Rest of your inputs */}
             <div className="grid grid-cols-1 gap-4">
-              <Input placeholder="Test Type" value={form.testType} onChange={(e) => setForm({ ...form, testType: e.target.value })} />
-              <Input placeholder="Specimen Type" value={form.specimenType} onChange={(e) => setForm({ ...form, specimenType: e.target.value })} />
-              <Input type="date" value={form.testDate} onChange={(e) => setForm({ ...form, testDate: e.target.value })} />
-              <Input placeholder="Requested By" value={form.requestedBy} onChange={(e) => setForm({ ...form, requestedBy: e.target.value })} />
-              <Textarea placeholder="Result Summary" rows={5} value={form.resultSummary} onChange={(e) => setForm({ ...form, resultSummary: e.target.value })} />
-              <Input placeholder="Pathogen" value={form.pathogen} onChange={(e) => setForm({ ...form, pathogen: e.target.value })} />
-              <Textarea placeholder="Remarks" rows={3} value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} />
-              <Select value={form.status} onValueChange={(val) => setForm({ ...form, status: val })}>
+              <Input
+                placeholder="Test Type"
+                value={form.testType}
+                onChange={(e) => setForm({ ...form, testType: e.target.value })}
+              />
+              <Input
+                placeholder="Specimen Type"
+                value={form.specimenType}
+                onChange={(e) =>
+                  setForm({ ...form, specimenType: e.target.value })
+                }
+              />
+              <Input
+                type="date"
+                value={form.testDate}
+                onChange={(e) => setForm({ ...form, testDate: e.target.value })}
+              />
+              <Input
+                placeholder="Requested By"
+                value={form.requestedBy}
+                onChange={(e) =>
+                  setForm({ ...form, requestedBy: e.target.value })
+                }
+              />
+              <Textarea
+                placeholder="Result Summary"
+                rows={5}
+                value={form.resultSummary}
+                onChange={(e) =>
+                  setForm({ ...form, resultSummary: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Pathogen"
+                value={form.pathogen}
+                onChange={(e) => setForm({ ...form, pathogen: e.target.value })}
+              />
+              <Textarea
+                placeholder="Remarks"
+                rows={3}
+                value={form.remarks}
+                onChange={(e) => setForm({ ...form, remarks: e.target.value })}
+              />
+              <Select
+                value={form.status}
+                onValueChange={(val) => setForm({ ...form, status: val })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

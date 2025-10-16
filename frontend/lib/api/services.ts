@@ -497,3 +497,52 @@ export const clinicalNotesApi = {
     return response.data;
   },
 };
+
+// transcribe and extract voice message
+export const transcribeAndExtract = {
+  fromAudio: async (audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", audioBlob);
+
+      // Try OpenAI first
+      const openaiRes = await apiClient.post("/api/openai/transcribe", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 25000,
+      });
+
+      return openaiRes.data;
+    } catch (err: any) {
+      console.warn("OpenAI transcription failed:", err?.response?.status);
+
+      // Fallback only for known quota/auth errors
+      if (err?.response?.status === 429 || err?.response?.status === 401) {
+        console.log("⚡ Switching to AssemblyAI fallback...");
+
+        try {
+          const formData = new FormData();
+          formData.append("audio", audioBlob);
+
+          const assemblyRes = await apiClient.post(
+            "/api/assemblyai/transcribe",
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+              timeout: 30000,
+            }
+          );
+
+          return assemblyRes.data;
+        } catch (fallbackErr) {
+          console.error("AssemblyAI also failed:", fallbackErr);
+          return {
+            success: false,
+            message: "All transcription services failed",
+          };
+        }
+      }
+
+      return { success: false, message: "Transcription failed" };
+    }
+  },
+};

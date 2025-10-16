@@ -17,14 +17,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { patientsApi } from "@/lib/api/services";
-import { Bot, Mic } from "lucide-react";
+import { patientsApi, transcribeAndExtract } from "@/lib/api/services";
+import { Bot } from "lucide-react";
 
 export default function NewPatientPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
 
-  // 🧩 Patient Form State
+  // Patient Form State
   const [form, setForm] = useState({
     patientId: `PAT-${Date.now().toString().slice(-6)}`,
     name: "",
@@ -45,7 +45,9 @@ export default function NewPatientPage() {
   // === AI INTERVIEW STATES ===
   const [isRecording, setIsRecording] = useState(false);
   const [isAIMode, setIsAIMode] = useState(false);
-  const [conversation, setConversation] = useState<{ type: string; text: string }[]>([]);
+  const [conversation, setConversation] = useState<
+    { type: string; text: string }[]
+  >([]);
   const [userInput, setUserInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -56,15 +58,56 @@ export default function NewPatientPage() {
 
   // === AI QUESTION FLOW ===
   const conversationFlow = [
-    { field: "name", question: "What's the patient's full name?", extract: (t: string) => t },
-    { field: "age", question: "How old is the patient?", extract: (t: string) => parseInt(t) || "" },
-    { field: "gender", question: "What's the patient's gender?", extract: (t: string) => t.toLowerCase().includes("female") ? "female" : t.toLowerCase().includes("male") ? "male" : "other" },
-    { field: "contact", question: "What's the patient's phone number?", extract: (t: string) => t },
-    { field: "address", question: "Where does the patient live?", extract: (t: string) => t },
-    { field: "bloodGroup", question: "What's the patient's blood group?", extract: (t: string) => t.toUpperCase() },
-    { field: "allergies", question: "Does the patient have any allergies?", extract: (t: string) => t },
-    { field: "medicalHistory", question: "Please give a short medical history.", extract: (t: string) => t },
-    { field: "assignedClinician", question: "Which clinician is assigned to this patient?", extract: (t: string) => t },
+    {
+      field: "name",
+      question: "What's the patient's full name?",
+      extract: (t: string) => t,
+    },
+    {
+      field: "age",
+      question: "How old is the patient?",
+      extract: (t: string) => parseInt(t) || "",
+    },
+    {
+      field: "gender",
+      question: "What's the patient's gender?",
+      extract: (t: string) =>
+        t.toLowerCase().includes("female")
+          ? "female"
+          : t.toLowerCase().includes("male")
+          ? "male"
+          : "other",
+    },
+    {
+      field: "contact",
+      question: "What's the patient's phone number?",
+      extract: (t: string) => t,
+    },
+    {
+      field: "address",
+      question: "Where does the patient live?",
+      extract: (t: string) => t,
+    },
+    {
+      field: "bloodGroup",
+      question: "What's the patient's blood group?",
+      extract: (t: string) => t.toUpperCase(),
+    },
+    {
+      field: "allergies",
+      question: "Does the patient have any allergies?",
+      extract: (t: string) => t,
+    },
+    {
+      field: "medicalHistory",
+      question: "Please give a short medical history.",
+      extract: (t: string) => t,
+    },
+    {
+      field: "assignedClinician",
+      question: "Which clinician is assigned to this patient?",
+      extract: (t: string) => t,
+    },
   ];
 
   useEffect(() => {
@@ -90,7 +133,10 @@ export default function NewPatientPage() {
       setIsAIMode(false);
       setConversation((prev) => [
         ...prev,
-        { type: "ai", text: "✅ Patient information captured and form filled." },
+        {
+          type: "ai",
+          text: "✅ Patient information captured and form filled.",
+        },
       ]);
     }
   };
@@ -133,7 +179,9 @@ export default function NewPatientPage() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/wav",
+        });
         await processAudio(audioBlob);
         stream.getTracks().forEach((t) => t.stop());
       };
@@ -153,14 +201,31 @@ export default function NewPatientPage() {
   };
 
   const processAudio = async (audioBlob: Blob) => {
-    setIsProcessing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    const mockTranscription = "My name is John Doe, I'm 45 years old, male, blood group O+, no allergies.";
-    handleUserResponse(mockTranscription);
-  };
+  setIsProcessing(true);
+  try {
+    const result = await transcribeAndExtract.fromAudio(audioBlob);
+    if (result.success) {
+      const transcription = result.data.transcription || "";
+      handleUserResponse(transcription);
+      setExtractedData((prev: any) => ({
+        ...prev,
+        ...result.data.extractedData,
+      }));
+    } else {
+      toast.error(result.message || "Failed to process audio");
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Error sending audio to backend");
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   // === FORM HANDLERS ===
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -168,7 +233,14 @@ export default function NewPatientPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name || !form.gender || !form.age || !form.contact || !form.address || !form.bloodGroup) {
+    if (
+      !form.name ||
+      !form.gender ||
+      !form.age ||
+      !form.contact ||
+      !form.address ||
+      !form.bloodGroup
+    ) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -178,7 +250,9 @@ export default function NewPatientPage() {
       const payload = {
         ...form,
         age: Number(form.age),
-        allergies: form.allergies ? form.allergies.split(",").map((a) => a.trim()) : [],
+        allergies: form.allergies
+          ? form.allergies.split(",").map((a) => a.trim())
+          : [],
         registrationDate: new Date().toISOString(),
       };
 
@@ -232,7 +306,12 @@ export default function NewPatientPage() {
                 </div>
               ) : (
                 conversation.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    key={i}
+                    className={`flex ${
+                      msg.type === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
                     <div
                       className={`px-3 py-2 rounded-lg ${
                         msg.type === "user"
@@ -245,7 +324,9 @@ export default function NewPatientPage() {
                   </div>
                 ))
               )}
-              {isProcessing && <p className="text-sm text-gray-500">Processing...</p>}
+              {isProcessing && (
+                <p className="text-sm text-gray-500">Processing...</p>
+              )}
               <div ref={conversationEndRef} />
             </div>
 
@@ -256,12 +337,17 @@ export default function NewPatientPage() {
                     type="text"
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleUserResponse(userInput)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleUserResponse(userInput)
+                    }
                     className="flex-1 border rounded-lg px-3 py-2"
                     placeholder="Type your response..."
                     disabled={isProcessing}
                   />
-                  <Button onClick={() => handleUserResponse(userInput)} disabled={!userInput.trim() || isProcessing}>
+                  <Button
+                    onClick={() => handleUserResponse(userInput)}
+                    disabled={!userInput.trim() || isProcessing}
+                  >
                     Send
                   </Button>
                 </div>
@@ -288,12 +374,24 @@ export default function NewPatientPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Full Name *</Label>
-                  <Input name="name" value={form.name} onChange={handleChange} placeholder="John Doe" />
+                  <Input
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="John Doe"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Gender *</Label>
-                  <Select value={form.gender} onValueChange={(val) => setForm((p) => ({ ...p, gender: val }))}>
-                    <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                  <Select
+                    value={form.gender}
+                    onValueChange={(val) =>
+                      setForm((p) => ({ ...p, gender: val }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
@@ -304,31 +402,63 @@ export default function NewPatientPage() {
 
                 <div className="space-y-2">
                   <Label>Age *</Label>
-                  <Input name="age" value={form.age} onChange={handleChange} type="number" placeholder="34" />
+                  <Input
+                    name="age"
+                    value={form.age}
+                    onChange={handleChange}
+                    type="number"
+                    placeholder="34"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Phone *</Label>
-                  <Input name="contact" value={form.contact} onChange={handleChange} placeholder="+234 704 *** 3184" />
+                  <Input
+                    name="contact"
+                    value={form.contact}
+                    onChange={handleChange}
+                    placeholder="+234 704 *** 3184"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Card Number (optional)</Label>
-                  <Input name="cardNumber" value={form.cardNumber} onChange={handleChange} placeholder="e.g HOSP/2023/00123" />
+                  <Input
+                    name="cardNumber"
+                    value={form.cardNumber}
+                    onChange={handleChange}
+                    placeholder="e.g HOSP/2023/00123"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Address *</Label>
-                  <Input name="address" value={form.address} onChange={handleChange} placeholder="Home address" />
+                  <Input
+                    name="address"
+                    value={form.address}
+                    onChange={handleChange}
+                    placeholder="Home address"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Blood Group *</Label>
-                  <Select value={form.bloodGroup} onValueChange={(val) => setForm((p) => ({ ...p, bloodGroup: val }))}>
-                    <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
+                  <Select
+                    value={form.bloodGroup}
+                    onValueChange={(val) =>
+                      setForm((p) => ({ ...p, bloodGroup: val }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select blood group" />
+                    </SelectTrigger>
                     <SelectContent>
-                      {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-                        <SelectItem key={bg} value={bg}>{bg}</SelectItem>
-                      ))}
+                      {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                        (bg) => (
+                          <SelectItem key={bg} value={bg}>
+                            {bg}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -337,27 +467,49 @@ export default function NewPatientPage() {
               {/* Medical Info */}
               <div className="space-y-2">
                 <Label>Allergies</Label>
-                <Textarea name="allergies" value={form.allergies} onChange={handleChange} placeholder="Enter known allergies (comma-separated)" />
+                <Textarea
+                  name="allergies"
+                  value={form.allergies}
+                  onChange={handleChange}
+                  placeholder="Enter known allergies (comma-separated)"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Medical History</Label>
-                <Textarea name="medicalHistory" value={form.medicalHistory} onChange={handleChange} placeholder="Brief medical history" />
+                <Textarea
+                  name="medicalHistory"
+                  value={form.medicalHistory}
+                  onChange={handleChange}
+                  placeholder="Brief medical history"
+                />
               </div>
 
               {/* Admin Info */}
               <div className="space-y-2">
                 <Label>Assigned Clinician</Label>
-                <Input name="assignedClinician" value={form.assignedClinician} onChange={handleChange} placeholder="Dr. Smith" />
+                <Input
+                  name="assignedClinician"
+                  value={form.assignedClinician}
+                  onChange={handleChange}
+                  placeholder="Dr. Smith"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Registered By</Label>
-                <Input name="registeredBy" value={form.registeredBy} onChange={handleChange} placeholder="Dr. Smith" />
+                <Input
+                  name="registeredBy"
+                  value={form.registeredBy}
+                  onChange={handleChange}
+                  placeholder="Dr. Smith"
+                />
               </div>
 
               <div className="flex justify-end space-x-3">
-                <Button variant="outline" onClick={() => router.back()}>Cancel</Button>
+                <Button variant="outline" onClick={() => router.back()}>
+                  Cancel
+                </Button>
                 <Button type="submit" disabled={loading}>
                   {loading ? "Registering..." : "Register Patient"}
                 </Button>

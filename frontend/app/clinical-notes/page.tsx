@@ -28,7 +28,6 @@ export default function ClinicalNotesPage() {
   const [notes, setNotes] = useState<ClinicalNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedNote, setSelectedNote] = useState<ClinicalNote | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -208,32 +207,32 @@ export default function ClinicalNotesPage() {
                           {note.content}
                         </p>
 
-                      <div className="flex gap-2 mt-1">
-                        {/* View Details Button */}
-                        <div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              router.push(`/clinical-notes/${note._id}`)
-                            }
-                            className="mt-1 cursor-pointer shadow-lg shadow-black/10"
-                          >
-                            View Details
-                          </Button>
-                        </div>
+                        <div className="flex gap-2 mt-1">
+                          {/* View Details Button */}
+                          <div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                router.push(`/clinical-notes/${note._id}`)
+                              }
+                              className="mt-1 cursor-pointer shadow-lg shadow-black/10"
+                            >
+                              View Details
+                            </Button>
+                          </div>
 
-                        {/* delete note */}
-                        <div>
-                          <DeleteConfirmDialog
-                            itemName="Lab Report"
-                            onConfirm={async () => {
-                              await clinicalNotesApi.deleteNote(note._id);
-                              router.push("/clinical-notes");
-                            }}
-                          />
+                          {/* delete note */}
+                          <div>
+                            <DeleteConfirmDialog
+                              itemName="Lab Report"
+                              onConfirm={async () => {
+                                await clinicalNotesApi.deleteNote(note._id);
+                                router.push("/clinical-notes");
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
                         {note.summary && (
                           <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
                             <strong>Summary:</strong> {note.summary}
@@ -248,12 +247,6 @@ export default function ClinicalNotesPage() {
           </CardContent>
         </Card>
       </div>
-
-      <NoteDetailsModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        note={selectedNote}
-      />
     </DashboardLayout>
   );
 }

@@ -3,7 +3,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { clinicalNotesApi, patientsApi } from "@/lib/api/services";
+import {
+  clinicalNotesApi,
+  patientsApi,
+  transcribeAndExtract,
+} from "@/lib/api/services";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Bot } from "lucide-react";
@@ -18,6 +22,20 @@ import {
 } from "@/components/ui/select";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
+// --- helper function ---
+const speak = (text: string) => {
+  if ("speechSynthesis" in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 1; // 0.8 - 1.2 recommended
+    utterance.pitch = 1;
+    window.speechSynthesis.cancel(); // stop any current speech
+    window.speechSynthesis.speak(utterance);
+  } else {
+    console.warn("Speech synthesis not supported in this browser.");
+  }
+};
+
 export default function NewClinicalNotePage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
@@ -31,6 +49,11 @@ export default function NewClinicalNotePage() {
   const [priority, setPriority] = useState("medium");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // --- Live Speech Recognition ---
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
 
   // AI Voice Features
   const [isRecording, setIsRecording] = useState(false);
@@ -58,6 +81,13 @@ export default function NewClinicalNotePage() {
             text.toLowerCase().includes(p.name.toLowerCase()) ||
             text.toLowerCase().includes(p.patientId.toLowerCase())
         );
+        if (!patient) {
+          speak(
+            "The patient you mentioned is not in the list. Please select manually."
+          );
+          toast.warning("Patient not found. Please select manually.");
+          return null;
+        }
         return patient?._id || null;
       },
     },
@@ -135,18 +165,87 @@ export default function NewClinicalNotePage() {
       const question = conversationFlow[step].question;
       setCurrentQuestion(question);
       setConversation((prev) => [...prev, { type: "ai", text: question }]);
+      speak(question);
+
+      // 🟢 Wait for speech to finish, then start recording automatically
+      const utterance = new SpeechSynthesisUtterance(question);
+      utterance.onend = () => {
+        console.log("✅ AI finished speaking. Starting recording...");
+        startRecording(); // Automatically start mic after each question
+      };
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
     } else {
-      applyExtractedData();
-      setConversation((prev) => [
-        ...prev,
-        {
-          type: "ai",
-          text: "✅ All information collected! I've filled in the form for you. Please review and submit.",
-        },
-      ]);
+      const endMsg =
+        "✅ All done! Please review the filled details and click Submit.";
+      setConversation((prev) => [...prev, { type: "ai", text: endMsg }]);
+      speak(endMsg);
       setIsAIMode(false);
     }
   };
+
+  // --- Confirm response and continue ---
+  // const confirmAndContinue = async (
+  //   responseText: string,
+  //   nextQuestion: string
+  // ) => {
+  //   const confirmation = `Got it — ${responseText}. ${
+  //     nextQuestion ? "Next question:" : "That’s all for now."
+  //   }`;
+  //   speak(confirmation); // your existing AI voice function
+
+  //   setConversation((prev) => [...prev, { from: "ai", text: confirmation }]);
+
+  //   if (nextQuestion) {
+  //     // delay a bit so the confirmation finishes speaking
+  //     setTimeout(() => {
+  //       speak(nextQuestion);
+  //       setConversation((prev) => [
+  //         ...prev,
+  //         { from: "ai", text: nextQuestion },
+  //       ]);
+  //     }, 2500);
+  //   } else {
+  //     // No more questions left
+  //     speak(
+  //       "All questions are done. Please review the auto-filled fields and submit the form."
+  //     );
+  //     toast.success("AI interview completed!");
+  //   }
+  // };
+
+  // const autoStopRecording = (stream: MediaStream, timeout = 10000) => {
+  //   const audioContext = new AudioContext();
+  //   const source = audioContext.createMediaStreamSource(stream);
+  //   const analyser = audioContext.createAnalyser();
+  //   source.connect(analyser);
+  //   const dataArray = new Uint8Array(analyser.fftSize);
+  //   let silenceTimer: NodeJS.Timeout | null = null;
+
+  //   const checkSilence = () => {
+  //     analyser.getByteFrequencyData(dataArray);
+  //     const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+
+  //     if (avg < 5) {
+  //       if (!silenceTimer) {
+  //         silenceTimer = setTimeout(() => {
+  //           console.log(" Silence detected, stopping recording");
+  //           stopRecording();
+  //         }, 3000);
+  //       }
+  //     } else {
+  //       if (silenceTimer) {
+  //         clearTimeout(silenceTimer);
+  //         silenceTimer = null;
+  //       }
+  //     }
+
+  //     requestAnimationFrame(checkSilence);
+  //   };
+
+  //   checkSilence();
+  //   setTimeout(() => stopRecording(), timeout);
+  // };
 
   const handleUserResponse = async (response: string) => {
     if (!response.trim()) return;
@@ -159,10 +258,16 @@ export default function NewClinicalNotePage() {
     const currentFlow = conversationFlow[currentStep];
     const extractedValue = currentFlow.extract(response);
 
-    setExtractedData((prev: any) => ({
-      ...prev,
-      [currentFlow.field]: extractedValue,
-    }));
+    if (currentFlow.field === "patient" && !extractedValue) {
+      // Stop and let them select manually
+      return;
+    }
+
+    setExtractedData((prev: any) => {
+      const newData = { ...prev, [currentFlow.field]: extractedValue };
+      if (currentFlow.field === "content") applyExtractedData();
+      return newData;
+    });
 
     setIsProcessing(false);
     setCurrentStep(currentStep + 1);
@@ -182,12 +287,43 @@ export default function NewClinicalNotePage() {
 
   const startRecording = async () => {
     try {
+      startLiveRecognition();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      source.connect(analyser);
+
+      let silenceStart = Date.now();
+      const silenceThreshold = 5; // sensitivity (lower = more sensitive)
+      const silenceDuration = 2000; // 2 seconds of silence = stop
+
+      const checkSilence = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+
+        if (avg < silenceThreshold) {
+          if (Date.now() - silenceStart > silenceDuration) {
+            console.log("🛑 Silence detected, stopping...");
+            stopRecording();
+            return;
+          }
+        } else {
+          silenceStart = Date.now();
+        }
+        requestAnimationFrame(checkSilence);
+      };
+      checkSilence();
+
       mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
 
       mediaRecorderRef.current.onstop = async () => {
@@ -200,26 +336,153 @@ export default function NewClinicalNotePage() {
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
+      // handleNoResponse();
     } catch (err) {
-      toast.error("Please allow microphone access to use voice input");
-      console.error("Please allow microphone access to use voice input", err);
+      toast.error("Microphone access denied or unavailable");
+      console.error(err);
     }
   };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
+      stopLiveRecognition(); // Stop live recognition too
       setIsRecording(false);
     }
   };
 
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
-    // Replace this mock with your backend AI transcription API
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    const mockTranscription = "Patient reports headache and fever for 3 days";
-    handleUserResponse(mockTranscription);
+    try {
+      const result = await transcribeAndExtract.fromAudio(audioBlob);
+
+      if (!result.success || !result.data?.transcription) {
+        // Fallback if no voice detected or transcription failed
+        toast.warning(
+          "I couldn’t hear your response. Please try speaking again."
+        );
+        speak("I couldn’t hear your response. Please try speaking again.");
+        // Retry automatically after 2 seconds
+        setTimeout(() => startRecording(), 2000);
+        return;
+      }
+
+      const transcription = result.data.transcription.trim();
+
+      if (!transcription) {
+        toast.warning("No speech detected. Please try again.");
+        speak("No speech detected. Please try again.");
+        setTimeout(() => startRecording(), 2000);
+        return;
+      }
+
+      // 🟢 Successfully got transcription
+      handleUserResponse(transcription);
+
+      if (result.data.extractedData) {
+        setExtractedData((prev: any) => ({
+          ...prev,
+          ...result.data.extractedData,
+        }));
+      }
+
+      // After handling one response, automatically listen for next if still in AI mode
+      if (isAIMode && currentStep < conversationFlow.length - 1) {
+        console.log("🎤 Ready for next question, auto-listening...");
+        //setTimeout(() => startRecording(), 2000); // short delay before next question
+      }
+    } catch (err) {
+      console.error("Transcription error:", err);
+      toast.error("Error processing your voice. Please try again.");
+      speak("Error processing your voice. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  // --- Start Browser Live Transcription ---
+  const startLiveRecognition = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.warn("SpeechRecognition not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = "";
+      let finalTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + " ";
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      setLiveTranscript(finalTranscript + interimTranscript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+    };
+
+    recognition.onend = () => {
+      console.log("Speech recognition ended.");
+
+      // Only trigger fallback if nothing was heard AND no recording is already processing
+      if (!liveTranscript.trim() && !isProcessing) {
+        toast.warning("I didn’t catch that, please repeat.");
+        speak("I didn’t catch that, please repeat.");
+        // Wait a bit before restarting
+        setTimeout(() => startRecording(), 2000);
+      } else if (liveTranscript.trim()) {
+        handleUserResponse(liveTranscript.trim());
+        setLiveTranscript("");
+      }
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  };
+
+  const stopLiveRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+  };
+
+  const handleNoResponse = () => {
+  // Only trigger if currently recording and not processing
+  if (!isRecording || isProcessing) return;
+
+  setTimeout(() => {
+    if (!isRecording || isProcessing) return; // cancel if user already spoke or it's processing
+
+    if (retryCount >= 2) {
+      speak("Let's skip this question. You can fill it manually later.");
+      setRetryCount(0);
+      setCurrentStep((s) => s + 1);
+      askNextQuestion(currentStep + 1);
+    } else {
+      setRetryCount((r) => r + 1);
+      speak("I couldn’t hear your response. Please try again.");
+      stopRecording(); // ensure clean restart
+      setTimeout(() => startRecording(), 2000);
+    }
+  }, 5000); // waits 10 seconds of silence
+};
+
 
   const handleSubmit = async () => {
     if (!selectedPatient) {
@@ -330,6 +593,14 @@ export default function NewClinicalNotePage() {
                     </div>
                   ))
                 )}
+                {isRecording && liveTranscript && (
+                  <div className="flex justify-end">
+                    <div className="px-3 py-2 rounded-lg bg-indigo-100 text-gray-700 italic animate-pulse">
+                      {liveTranscript}
+                    </div>
+                  </div>
+                )}
+
                 {isProcessing && (
                   <p className="text-sm text-gray-500">Processing...</p>
                 )}
