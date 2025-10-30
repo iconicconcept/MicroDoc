@@ -1,4 +1,4 @@
-import { apiClient } from "./client";
+import apiClient from "./client";
 import {
   User,
   Patient,
@@ -10,15 +10,13 @@ import {
   ApiResponse,
 } from "@/types/medical";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000/api";
 
 // Auth Services
 export const authApi = {
   login: async (email: string, password: string) => {
     const response = await apiClient.post<
       ApiResponse<{ user: User; token: string }>
-    >(`${API_BASE_URL}/auth/login`, {
+    >(`/auth/login`, {
       email,
       password,
     });
@@ -36,7 +34,7 @@ export const authApi = {
   }) => {
     const response = await apiClient.post<
       ApiResponse<{ user: User; token: string }>
-    >(`${API_BASE_URL}/auth/register`, userData);
+    >(`/auth/register`, userData);
     // localStorage.setItem("token", response.data.token);
     return response.data;
   },
@@ -44,7 +42,7 @@ export const authApi = {
   getMe: async () => {
     const token = localStorage.getItem("token");
     const response = await apiClient.get<ApiResponse<{ user: User }>>(
-      `${API_BASE_URL}/auth/me`,
+      `/auth/me`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -61,7 +59,7 @@ export const authApi = {
     hospital?: string;
   }) => {
     const response = await apiClient.put<ApiResponse<{ user: User }>>(
-      `${API_BASE_URL}/auth/profile`,
+      `/auth/profile`,
       profileData
     );
     return response.data;
@@ -72,7 +70,7 @@ export const authApi = {
     newPassword: string;
   }) => {
     const response = await apiClient.put<ApiResponse<{ message: string }>>(
-      `${API_BASE_URL}/auth/change-password`,
+      `/auth/change-password`,
       passwordData
     );
     return response.data;
@@ -80,7 +78,7 @@ export const authApi = {
 
   logout: async () => {
     const response = await apiClient.post<ApiResponse<{ message: string }>>(
-      `${API_BASE_URL}/auth/logout`
+      `/auth/logout`
     );
     return response.data;
   },
@@ -96,13 +94,13 @@ export const labReportsApi = {
     });
     const response = await apiClient.get<
       ApiResponse<PaginatedResponse<LabReport>>
-    >(`${API_BASE_URL}/lab-reports?${params}`);
+    >(`/lab-reports?${params}`);
     return response.data;
   },
 
   getReportById: async (id: string) => {
     const response = await apiClient.get<ApiResponse<LabReport>>(
-      `${API_BASE_URL}/lab-reports/${id}`
+      `/lab-reports/${id}`
     );
     return response.data;
   },
@@ -111,7 +109,7 @@ export const labReportsApi = {
     reportData: Omit<LabReport, "id" | "createdAt" | "updatedAt">
   ) => {
     const response = await apiClient.post<ApiResponse<LabReport>>(
-      `${API_BASE_URL}/lab-reports`,
+      `/lab-reports`,
       reportData
     );
     return response.data;
@@ -119,7 +117,7 @@ export const labReportsApi = {
 
   updateReport: async (id: string, reportData: Partial<LabReport>) => {
     const response = await apiClient.put<ApiResponse<LabReport>>(
-      `${API_BASE_URL}/lab-reports/${id}`,
+      `/lab-reports/${id}`,
       reportData
     );
     return response.data;
@@ -127,7 +125,7 @@ export const labReportsApi = {
 
   deleteReport: async (id: string) => {
     const response = await apiClient.delete<ApiResponse<{ message: string }>>(
-      `${API_BASE_URL}/lab-reports/${id}`
+      `/lab-reports/${id}`
     );
     return response.data;
   },
@@ -137,7 +135,7 @@ export const labReportsApi = {
     status: "pending" | "completed" | "cancelled"
   ) => {
     const response = await apiClient.patch<ApiResponse<LabReport>>(
-      `${API_BASE_URL}/lab-reports/${id}/status`,
+      `/lab-reports/${id}/status`,
       { status }
     );
     return response.data;
@@ -146,7 +144,7 @@ export const labReportsApi = {
   generateAISuggestions: async (id: string) => {
     const response = await apiClient.post<
       ApiResponse<{ suggestions: string[]; report: LabReport }>
-    >(`${API_BASE_URL}/lab-reports/${id}/ai-suggestions`);
+    >(`/lab-reports/${id}/ai-suggestions`);
     return response.data;
   },
 };
@@ -165,16 +163,16 @@ export const patientsApi = {
     });
     const response = await apiClient.get<
       ApiResponse<PaginatedResponse<Patient>>
-    >(`${API_BASE_URL}/patients?${params}`);
+    >(`/patients?${params}`);
     return response.data;
   },
 
   getPatient: (id: string) =>
-    apiClient.get<ApiResponse<Patient>>(`${API_BASE_URL}/patients/${id}`),
+    apiClient.get<ApiResponse<Patient>>(`/patients/${id}`),
 
   getPatientById: async (id: string) => {
     const response = await apiClient.get<ApiResponse<Patient>>(
-      `${API_BASE_URL}/patients/${id}`
+      `/patients/${id}`
     );
     return response.data;
   },
@@ -183,7 +181,7 @@ export const patientsApi = {
     patientData: Omit<Patient, "id" | "createdAt" | "updatedAt">
   ) => {
     const response = await apiClient.post<ApiResponse<Patient>>(
-      `${API_BASE_URL}/patients`,
+      `/patients`,
       patientData
     );
     return response.data;
@@ -191,7 +189,7 @@ export const patientsApi = {
 
   updatePatient: async (id: string, patientData: Partial<Patient>) => {
     const response = await apiClient.put<ApiResponse<Patient>>(
-      `${API_BASE_URL}/patients/${id}`,
+      `/patients/${id}`,
       patientData
     );
     return response.data;
@@ -199,7 +197,7 @@ export const patientsApi = {
 
   deletePatient: async (id: string) => {
     const response = await apiClient.delete<ApiResponse<{ message: string }>>(
-      `${API_BASE_URL}/patients/${id}`
+      `/patients/${id}`
     );
     return response.data;
   },
@@ -207,7 +205,7 @@ export const patientsApi = {
   searchPatients: async (query: string) => {
     const response = await apiClient.get<
       ApiResponse<{ items: Patient[]; total: number }>
-    >(`${API_BASE_URL}/patients/search?q=${encodeURIComponent(query)}`);
+    >(`/patients/search?q=${encodeURIComponent(query)}`);
     return response.data;
   },
 };
@@ -222,7 +220,7 @@ export const burnoutApi = {
     });
     const response = await apiClient.get<
       ApiResponse<PaginatedResponse<BurnoutEntry>>
-    >(`${API_BASE_URL}/burnout?${params}`);
+    >(`/burnout?${params}`);
     return response.data;
   },
 
@@ -230,7 +228,7 @@ export const burnoutApi = {
     entryData: Omit<BurnoutEntry, "id" | "createdAt" | "updatedAt">
   ) => {
     const response = await apiClient.post<ApiResponse<BurnoutEntry>>(
-      `${API_BASE_URL}/burnout`,
+      `/burnout`,
       entryData
     );
     return response.data;
@@ -238,7 +236,7 @@ export const burnoutApi = {
 
   updateEntry: async (id: string, entryData: Partial<BurnoutEntry>) => {
     const response = await apiClient.put<ApiResponse<BurnoutEntry>>(
-      `${API_BASE_URL}/burnout/${id}`,
+      `/burnout/${id}`,
       entryData
     );
     return response.data;
@@ -246,14 +244,14 @@ export const burnoutApi = {
 
   deleteEntry: async (id: string) => {
     const response = await apiClient.delete<ApiResponse<{ message: string }>>(
-      `${API_BASE_URL}/burnout/${id}`
+      `/burnout/${id}`
     );
     return response.data;
   },
 
   getAnalytics: async (period: string = "month") => {
     const response = await apiClient.get<ApiResponse<BurnoutAnalytics>>(
-      `${API_BASE_URL}/burnout/analytics?period=${period}`
+      `/burnout/analytics?period=${period}`
     );
     return response.data;
   },
@@ -261,14 +259,14 @@ export const burnoutApi = {
   getTrends: async (period: string = "month") => {
     const response = await apiClient.get<
       ApiResponse<{ period: string; trends: any[]; totalDays: number }>
-    >(`${API_BASE_URL}/burnout/trends?period=${period}`);
+    >(`/burnout/trends?period=${period}`);
     return response.data;
   },
 
   getRecommendations: async () => {
     const response = await apiClient.get<
       ApiResponse<{ recommendations: string[] }>
-    >(`${API_BASE_URL}/burnout/recommendations`);
+    >(`/burnout/recommendations`);
     return response.data;
   },
 };
@@ -277,7 +275,7 @@ export const burnoutApi = {
 export const analyticsApi = {
   getDashboardStats: async (): Promise<ApiResponse<DashboardStats>> => {
     const response = await apiClient.get<ApiResponse<DashboardStats>>(
-      `${API_BASE_URL}/analytics/dashboard`
+      `/analytics/dashboard`
     );
     return response.data;
   },
@@ -291,7 +289,7 @@ export const analyticsApi = {
     if (endDate) params.append("endDate", endDate);
 
     const response = await apiClient.get<ApiResponse<ClinicalAnalytics>>(
-      `${API_BASE_URL}/analytics/clinical?${params}`
+      `/analytics/clinical?${params}`
     );
     return response.data;
   },
@@ -305,14 +303,14 @@ export const analyticsApi = {
     if (endDate) params.append("endDate", endDate);
 
     const response = await apiClient.get<ApiResponse<LabAnalytics>>(
-      `${API_BASE_URL}/analytics/lab?${params}`
+      `/analytics/lab?${params}`
     );
     return response.data;
   },
 
   getSystemAnalytics: async (): Promise<ApiResponse<SystemAnalytics>> => {
     const response = await apiClient.get<ApiResponse<SystemAnalytics>>(
-      `${API_BASE_URL}/analytics/system`
+      `/analytics/system`
     );
     return response.data;
   },
@@ -450,7 +448,7 @@ export const clinicalNotesApi = {
 
     const response = await apiClient.get<
       ApiResponse<PaginatedResponse<ClinicalNote>>
-    >(`${API_BASE_URL}/clinical-notes?${params}`);
+    >(`/clinical-notes?${params}`);
 
     return response.data;
   },
@@ -458,7 +456,7 @@ export const clinicalNotesApi = {
   // Create a new clinical note
   createNote: async (data: Partial<ClinicalNote>) => {
     const response = await apiClient.post(
-      `${API_BASE_URL}/clinical-notes`,
+      `/clinical-notes`,
       data
     );
     return response.data;
@@ -467,7 +465,7 @@ export const clinicalNotesApi = {
   // Get a note by ID
   getNoteById: async (id: string) => {
     const response = await apiClient.get(
-      `${API_BASE_URL}/clinical-notes/${id}`
+      `/clinical-notes/${id}`
     );
     return response.data;
   },
@@ -475,7 +473,7 @@ export const clinicalNotesApi = {
   // Update a note
   updateNote: async (id: string, data: Partial<ClinicalNote>) => {
     const response = await apiClient.put(
-      `${API_BASE_URL}/clinical-notes/${id}`,
+      `/clinical-notes/${id}`,
       data
     );
     return response.data;
@@ -484,7 +482,7 @@ export const clinicalNotesApi = {
   // Delete a note
   deleteNote: async (id: string) => {
     const response = await apiClient.delete(
-      `${API_BASE_URL}/clinical-notes/${id}`
+      `/clinical-notes/${id}`
     );
     return response.data;
   },
@@ -492,7 +490,7 @@ export const clinicalNotesApi = {
   // Get notes by patient
   getNotesByPatient: async (patientId: string, page = 1, limit = 10) => {
     const response = await apiClient.get(
-      `${API_BASE_URL}/clinical-notes/patient/${patientId}?page=${page}&limit=${limit}`
+      `/clinical-notes/patient/${patientId}?page=${page}&limit=${limit}`
     );
     return response.data;
   },
@@ -506,10 +504,14 @@ export const transcribeAndExtract = {
       formData.append("file", audioBlob);
 
       // Try OpenAI first
-      const openaiRes = await apiClient.post("/api/openai/transcribe", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 25000,
-      });
+      const openaiRes = await apiClient.post(
+        "/api/openai/transcribe",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 25000,
+        }
+      );
 
       return openaiRes.data;
     } catch (err: any) {

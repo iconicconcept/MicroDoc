@@ -1,7 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 import "dotenv/config";
-console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
 import cors from "cors";
 import helmet from "helmet";
 // import compression from "compression";
@@ -41,17 +40,20 @@ console.log("MONGODB_URI from env:", process.env.MONGODB_URI);
 app.use(helmet());
 // app.use(compression());
 // app.use(morgan("combined"));
-const allowedOrigins = [process.env.FRONTEND_URL || "http://localhost:3000"];
+const allowedOrigins = [
+  "https://microdocai.vercel.app",
+  "http://localhost:3000",
+];
 
 app.use(
   cors({
     origin: allowedOrigins,
     methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
-    allowedHeaders: "Content-Type, Authorization",
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
   })
 );
+// app.options("*", cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -102,3 +104,5 @@ async function startServer() {
 }
 
 startServer();
+
+//clinical_note_AI_creation_firstVersion

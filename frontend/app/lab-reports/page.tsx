@@ -22,13 +22,10 @@ import {
   Calendar,
   Filter,
   Microscope,
-  Delete,
-  DeleteIcon,
-  Trash,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
-import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
+// import VoiceNoteGuideModal from "@/components/clinical/VoiceNoteGuideModal";
+// import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
 import DeleteConfirmDialog from "@/components/delete/Delete";
 
 export default function LabReportsPage() {
@@ -43,13 +40,13 @@ export default function LabReportsPage() {
       loadReports();
     }
     if (!isAuthenticated || !user) {
-      router.push("/login");
+      router.replace("/login");
     }
   }, [isAuthenticated, user, router]);
 
   const loadReports = async () => {
     try {
-      const response = await labReportsApi.getReports(1, 20);
+      const response = await labReportsApi.getReports();
       if (response.success && response.data) {
         setReports(response.data?.items);
       }

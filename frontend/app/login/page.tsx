@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Stethoscope, Mail, Lock, Activity } from 'lucide-react';
+import { Stethoscope, Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -102,11 +102,11 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
+            {/* <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
               <p className="text-xs text-gray-600 text-center">
                 <strong>Demo Access:</strong> Use any email and password to test the platform
               </p>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 

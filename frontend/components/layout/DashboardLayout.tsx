@@ -5,7 +5,7 @@ import { User } from "@/types/medical";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { apiClient } from "@/lib/api/client";
+import apiClient from "@/lib/api/client";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

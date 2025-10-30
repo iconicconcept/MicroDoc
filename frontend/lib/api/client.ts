@@ -1,15 +1,19 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000/api';
+const API_BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:7000"
+    : "https://microdocai.onrender.com";
 
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  // timeout: 50000,
+const apiClient = axios.create({
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  withCredentials: true, // allows cookies
+  withCredentials: true,
 });
+
+export default apiClient;
 
 // Flag to avoid multiple refresh calls at once
 //let isRefreshing = false;
