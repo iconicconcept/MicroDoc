@@ -25,16 +25,16 @@ interface Patient {
   patientId: string;
 }
 
-interface LabForm {
-  testType: string;
-  specimenType: string;
-  testDate: string;
-  requestedBy: string;
-  resultSummary: string;
-  pathogen: string;
-  remarks: string;
-  status: "pending" | "completed" | "reviewed" | "cancelled";
-}
+// interface LabForm {
+//   testType: string;
+//   specimenType: string;
+//   testDate: string;
+//   requestedBy: string;
+//   resultSummary: string;
+//   pathogen: string;
+//   remarks: string;
+//   status: "pending" | "completed" | "reviewed" | "cancelled";
+// }
 
 interface ExtractedData {
   patient?: string;

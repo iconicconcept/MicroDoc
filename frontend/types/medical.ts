@@ -44,7 +44,7 @@ export interface ClinicalNote {
   priority: 'low' | 'medium' | 'high';
   isSynced: boolean;
   status?: string
-  createdAt: string;
+  createdAt: string | Date;
   updatedAt: string;
   patient?: {
     name: string;

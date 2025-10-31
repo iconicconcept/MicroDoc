@@ -40,8 +40,8 @@ export default function ClinicalNoteDetailPage() {
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
-    type: "",
-    priority: "",
+    type: "clinical",
+    priority: "medium",
     chiefComplaint: "",
     diagnosis: "",
     plan: "",

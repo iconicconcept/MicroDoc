@@ -55,7 +55,7 @@ export default function NewPatientPage() {
     allergies: "",
     bloodGroup: "",
     cardNumber: "",
-    registeredBy: user?.id || "",
+    registeredBy: user?._id || "",
     assignedClinician: user?.name || "",
   });
 
