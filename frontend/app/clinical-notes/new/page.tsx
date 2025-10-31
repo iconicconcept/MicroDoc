@@ -44,8 +44,8 @@ interface SpeechRecognitionErrorEvent {
 // For browsers where SpeechRecognition isn’t declared in types
 declare global {
   interface Window {
-    webkitSpeechRecognition?: typeof SpeechRecognition;
-    SpeechRecognition?: typeof SpeechRecognition;
+    webkitSpeechRecognition?: new () => SpeechRecognition;
+    SpeechRecognition?: new () => SpeechRecognition;
   }
 
   interface SpeechRecognition extends EventTarget {
@@ -55,15 +55,21 @@ declare global {
     start(): void;
     stop(): void;
     onresult: ((event: SpeechRecognitionEvent) => void) | null;
-    onerror: ((event: SpeechRecognitionErrorEvent) => void) | null; // <— change any
+    onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
     onend: (() => void) | null;
   }
 
-  interface SpeechRecognitionEvent {
+  interface SpeechRecognitionEvent extends Event {
     resultIndex: number;
     results: SpeechRecognitionResultList;
   }
+
+  interface SpeechRecognitionErrorEvent extends Event {
+    error: string;
+    message?: string;
+  }
 }
+
 
 interface Patient {
   _id: string;
