@@ -94,7 +94,7 @@ export default function NewClinicalNotePage() {
   const [priority, setPriority] = useState("medium");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  //const [retryCount, setRetryCount] = useState(0);
 
   // --- Live Speech Recognition ---
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -477,7 +477,7 @@ export default function NewClinicalNotePage() {
       setLiveTranscript(finalTranscript + interimTranscript);
     };
 
-    recognition.onerror = (event: { error: SpeechRecognitionErrorEvent }) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Speech recognition error:", event.error);
     };
 
@@ -507,26 +507,26 @@ export default function NewClinicalNotePage() {
     }
   };
 
-  const handleNoResponse = () => {
-    // Only trigger if currently recording and not processing
-    if (!isRecording || isProcessing) return;
+  // const handleNoResponse = () => {
+  //   // Only trigger if currently recording and not processing
+  //   if (!isRecording || isProcessing) return;
 
-    setTimeout(() => {
-      if (!isRecording || isProcessing) return; // cancel if user already spoke or it's processing
+  //   setTimeout(() => {
+  //     if (!isRecording || isProcessing) return; // cancel if user already spoke or it's processing
 
-      if (retryCount >= 2) {
-        speak("Let's skip this question. You can fill it manually later.");
-        setRetryCount(0);
-        setCurrentStep((s) => s + 1);
-        askNextQuestion(currentStep + 1);
-      } else {
-        setRetryCount((r) => r + 1);
-        speak("I couldn’t hear your response. Please try again.");
-        stopRecording(); // ensure clean restart
-        setTimeout(() => startRecording(), 2000);
-      }
-    }, 5000); // waits 10 seconds of silence
-  };
+  //     if (retryCount >= 2) {
+  //       speak("Let's skip this question. You can fill it manually later.");
+  //       setRetryCount(0);
+  //       setCurrentStep((s) => s + 1);
+  //       askNextQuestion(currentStep + 1);
+  //     } else {
+  //       setRetryCount((r) => r + 1);
+  //       speak("I couldn’t hear your response. Please try again.");
+  //       stopRecording(); // ensure clean restart
+  //       setTimeout(() => startRecording(), 2000);
+  //     }
+  //   }, 5000); // waits 10 seconds of silence
+  // };
 
   const handleSubmit = async () => {
     if (!selectedPatient) {

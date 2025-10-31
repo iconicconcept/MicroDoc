@@ -15,9 +15,9 @@ import { Input } from "@/components/ui/input";
 import { clinicalNotesApi } from "@/lib/api/services";
 import { ClinicalNote } from "@/types/medical";
 import { formatDate } from "@/lib/utils";
-import { Plus, Search, FileText, Calendar, Filter, Badge } from "lucide-react";
+import { Plus, Search, FileText, Calendar, Filter } from "lucide-react";
 import { toast } from "sonner";
-import NoteDetailsModal from "@/components/clinical/NoteDetailsModal";
+//import NoteDetailsModal from "@/components/clinical/NoteDetailsModal";
 
 import { useRouter } from "next/navigation";
 import DeleteConfirmDialog from "@/components/delete/Delete";
@@ -28,7 +28,7 @@ export default function ClinicalNotesPage() {
   const [notes, setNotes] = useState<ClinicalNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  //const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -45,7 +45,7 @@ export default function ClinicalNotesPage() {
       if (response.success && response.data) {
         const response = await clinicalNotesApi.getNotes(1, 20);
         if (response.success && response.data) {
-          const formattedNotes = response.data.items.map((note: any) => ({
+          const formattedNotes = response.data.items.map((note: ClinicalNote) => ({
             ...note,
             patient: note.patientId,
           }));
