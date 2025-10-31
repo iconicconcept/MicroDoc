@@ -44,13 +44,17 @@ export interface ClinicalNote {
   priority?: 'low' | 'medium' | 'high';
   isSynced: boolean;
   status?: string
+  chiefComplaint?: string;
+  diagnosis?: string;
+  plan?: string;
   createdAt: string | Date;
   updatedAt: string;
   patient?: {
-    name: string;
-    patientId: string;
-    age: number;
-    gender: string;
+    name?: string;
+    patientId?: string;
+    age?: number;
+    gender?: string;
+    cardNumber?: string;
   };
 }
 

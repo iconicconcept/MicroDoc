@@ -13,21 +13,7 @@ import { toast } from "sonner";
 import { clinicalNotesApi } from "@/lib/api/services";
 import { formatDate } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
-
-interface ClinicalNote {
-  _id: string;
-  patientId?: {
-    name?: string;
-    cardNumber?: string;
-  };
-  type?: string;
-  priority?: string;
-  chiefComplaint?: string;
-  diagnosis?: string;
-  plan?: string;
-  content?: string;
-  createdAt?: string | Date;
-}
+import type { ClinicalNote } from "@/types/medical";
 
 export default function ClinicalNoteDetailPage() {
   const router = useRouter();
@@ -146,9 +132,9 @@ export default function ClinicalNoteDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {note.patientId?.name || "Unknown Patient"}{" "}
+              {note.patient?.name || "Unknown Patient"}{" "}
               <span className="text-sm text-gray-500">
-                • {note.patientId?.cardNumber || "No Card"} • {note.createdAt ? formatDate(note.createdAt) : "No Date"}
+                • {note.patient?.cardNumber || "No Card"} • {note.createdAt ? formatDate(note.createdAt) : "No Date"}
 
               </span>
             </CardTitle>
@@ -160,7 +146,7 @@ export default function ClinicalNoteDetailPage() {
               <div>
                 <label className="text-sm font-medium block mb-2">Type</label>
                 {isEditing ? (
-                  <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                  <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as ClinicalNote["type"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="clinical">Clinical</SelectItem>
@@ -177,7 +163,7 @@ export default function ClinicalNoteDetailPage() {
               <div>
                 <label className="text-sm font-medium block mb-2">Priority</label>
                 {isEditing ? (
-                  <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
+                  <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as ClinicalNote["priority"] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="low">Low</SelectItem>
