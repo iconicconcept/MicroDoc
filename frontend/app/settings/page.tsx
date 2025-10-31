@@ -1,3 +1,5 @@
+"use client";
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useRouter } from "next/navigation";
