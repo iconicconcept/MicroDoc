@@ -19,6 +19,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { patientsApi, transcribeAndExtract } from "@/lib/api/services";
 import { Bot } from "lucide-react";
+import { AxiosError } from "axios";
 
 interface ExtractedData {
   name?: string;
@@ -282,9 +283,14 @@ export default function NewPatientPage() {
       } else {
         toast.error("Failed to register patient");
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("Error registering patient");
+    } catch (err) {
+        const error = err as AxiosError<{ error?: string }>;
+        if (error.response?.status === 400 && error.response?.data?.error) {
+      // This will catch the “Card number already registered” message
+        toast.error(error.response.data.error);
+      } else {
+        toast.error("Error registering patient");
+      }
     } finally {
       setLoading(false);
     }

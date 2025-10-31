@@ -38,8 +38,8 @@ export default function PatientDetailPage() {
     try {
       const res = await patientsApi.getPatientById(id as string);
       if (res.success) {
-        setPatient(res.data || res.data.patient);
-        setForm(res.data.patient || res.data);
+        setPatient(res.data.patient);
+        setForm(res.data.patient);
       } else {
         toast.error("Failed to load patient details");
       }
@@ -59,7 +59,7 @@ export default function PatientDetailPage() {
       const res = await patientsApi.updatePatient(id as string, form);
       if (res.success) {
         toast.success("Patient updated successfully");
-        setPatient(res.data || res.data.patient);
+        setPatient(res.data);
         setIsEditing(false);
       } else {
         toast.error(res.error || "Failed to update patient");

@@ -91,7 +91,7 @@ app.use(errorHandler);
 async function startServer() {
   try {
     await connectToDatabase();
-    console.log("MONGODB_URI:", process.env.MONGODB_URI);
+    console.log("MONGODB_URI:", "MongoDB_URI connected successfully.");
     app.listen(PORT, () => {
       console.log(`🚀 Backend server running on port ${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV}`);

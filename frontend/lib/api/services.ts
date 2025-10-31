@@ -485,7 +485,7 @@ export const clinicalNotesApi = {
 
   // Create a new clinical note
   createNote: async (data: Partial<ClinicalNote>) => {
-    const response = await apiClient.post(`/clinical-notes`, data);
+    const response = await apiClient.post("/clinical-notes", data);
     return response.data;
   },
 

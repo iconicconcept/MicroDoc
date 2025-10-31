@@ -130,6 +130,19 @@ export const createPatient = async (req, res) => {
       return;
     }
 
+    // Check if card number already exists (if provided)
+    if (cardNumber) {
+      const existingCard = await Patient.findOne({
+        cardNumber: cardNumber.trim(),
+      });
+      if (existingCard) {
+        return res.status(400).json({
+          success: false,
+          error: "Card number already registered",
+        });
+      }
+    }
+
     const patient = await Patient.create({
       patientId,
       name,

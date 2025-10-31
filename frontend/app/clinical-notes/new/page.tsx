@@ -552,7 +552,7 @@ export default function NewClinicalNotePage() {
     try {
       const payload = {
         patientId: selectedPatient,
-        clinicianId: user?.id || "",
+        clinicianId: user?._id || "",
         chiefComplaint,
         diagnosis,
         plan,
