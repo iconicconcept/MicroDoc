@@ -9,14 +9,15 @@ import { formatDate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { LucideIcon } from "lucide-react";
 
 interface ActivityItem {
-  id: string;
+  _id: string;
   type: "clinical_note" | "lab_report";
   title: string;
   description: string;
   timestamp: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
 }
 
@@ -52,7 +53,7 @@ export default function RecentActivity() {
 
         notes.forEach((note) => {
           noteActivities.push({
-            id: note._id,
+            _id: note._id,
             type: "clinical_note",
             title: `Clinical Note - ${note.patient?.name || "Unknown Patient"}`,
             description: note.content
@@ -76,7 +77,7 @@ export default function RecentActivity() {
 
         reports.forEach((report) => {
           reportActivities.push({
-            id: report.id,
+            _id: report._id,
             type: "lab_report",
             title: `Lab Report - ${report.sampleId || "Unknown Sample"}`,
             description: report.findings
@@ -150,7 +151,7 @@ export default function RecentActivity() {
             const Icon = activity.icon;
             return (
               <div
-                key={activity.id}
+                key={activity._id}
                 className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
               >
                 <div

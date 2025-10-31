@@ -14,12 +14,27 @@ import { clinicalNotesApi } from "@/lib/api/services";
 import { formatDate } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
+interface ClinicalNote {
+  _id: string;
+  patientId?: {
+    name?: string;
+    cardNumber?: string;
+  };
+  type?: string;
+  priority?: string;
+  chiefComplaint?: string;
+  diagnosis?: string;
+  plan?: string;
+  content?: string;
+  createdAt?: string | Date;
+}
+
 export default function ClinicalNoteDetailPage() {
   const router = useRouter();
   const { id } = useParams();
   const { user, isAuthenticated } = useAuthStore();
 
-  const [note, setNote] = useState<any>(null);
+  const [note, setNote] = useState<ClinicalNote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -35,7 +50,7 @@ export default function ClinicalNoteDetailPage() {
 
   useEffect(() => {
     if (isAuthenticated && id) fetchNote();
-  }, [isAuthenticated, id]);
+  }, [isAuthenticated, id,]);
 
   const fetchNote = async () => {
     setIsLoading(true);
@@ -53,6 +68,7 @@ export default function ClinicalNoteDetailPage() {
         });
       } else toast.error("Failed to load note details");
     } catch (error) {
+      console.error("Error loading note", error)
       toast.error("Error loading note");
     } finally {
       setIsLoading(false);
@@ -71,6 +87,7 @@ export default function ClinicalNoteDetailPage() {
         toast.error(response.error || "Failed to update note");
       }
     } catch (error) {
+      console.error("Error updating note", error);
       toast.error("Error updating note");
     } finally {
       setSaving(false);
@@ -131,7 +148,8 @@ export default function ClinicalNoteDetailPage() {
             <CardTitle>
               {note.patientId?.name || "Unknown Patient"}{" "}
               <span className="text-sm text-gray-500">
-                • {note.patientId?.cardNumber || "No Card"} • {formatDate(note.createdAt)}
+                • {note.patientId?.cardNumber || "No Card"} • {note.createdAt ? formatDate(note.createdAt) : "No Date"}
+
               </span>
             </CardTitle>
           </CardHeader>

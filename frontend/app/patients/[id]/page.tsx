@@ -9,15 +9,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Edit, Save, ArrowLeft } from "lucide-react";
+import { Patient } from "@/types/medical";
+
+const editableFields: (keyof Patient)[] = [
+  "name",
+  "age",
+  "gender",
+  "contact",
+  "address",
+  "medicalHistory",
+  "allergies",
+];
 
 export default function PatientDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
 
-  const [patient, setPatient] = useState<any>(null);
+  const [patient, setPatient] = useState<Patient | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState<any>({});
+  const [form, setForm] = useState<Partial<Patient>>({});
 
   useEffect(() => {
     if (id) fetchPatient();
@@ -27,8 +38,8 @@ export default function PatientDetailPage() {
     try {
       const res = await patientsApi.getPatientById(id as string);
       if (res.success) {
-        setPatient(res.data.patient);
-        setForm(res.data.patient);
+        setPatient(res.data || res.data.patient);
+        setForm(res.data.patient || res.data);
       } else {
         toast.error("Failed to load patient details");
       }
@@ -38,8 +49,9 @@ export default function PatientDetailPage() {
     }
   };
 
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
@@ -47,7 +59,7 @@ export default function PatientDetailPage() {
       const res = await patientsApi.updatePatient(id as string, form);
       if (res.success) {
         toast.success("Patient updated successfully");
-        setPatient(res.data);
+        setPatient(res.data || res.data.patient);
         setIsEditing(false);
       } else {
         toast.error(res.error || "Failed to update patient");
@@ -94,36 +106,25 @@ export default function PatientDetailPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[
-            "name",
-            "age",
-            "gender",
-            "contact",
-            "address",
-            "bloodGroup",
-            "cardNumber",
-            "assignedClinician",
-            "registeredBy",
-            "medicalHistory",
-          ].map((field) => (
-            <div key={field}>
-              <label className="block text-sm font-medium text-gray-700 capitalize">
-                {field.replace(/([A-Z])/g, " $1")}
-              </label>
-              {isEditing ? (
-                <Input
-                  name={field}
-                  value={form[field] || ""}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
-              ) : (
-                <p className="mt-1 text-gray-900">{patient[field] || "—"}</p>
-              )}
-            </div>
-          ))}
-        </div>
+        {editableFields.map((field) => (
+          <div key={field}>
+            <label className="block text-sm font-medium text-gray-700 capitalize">
+              {String(field).replace(/([A-Z])/g, " $1")}
+            </label>
+            {isEditing ? (
+              <Input
+                name={field}
+                value={String(form[field] ?? "")}
+                onChange={handleChange}
+                className="mt-1"
+              />
+            ) : (
+              <p className="mt-1 text-gray-900">
+                {String(patient[field] ?? "—")}
+              </p>
+            )}
+          </div>
+        ))}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">

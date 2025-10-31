@@ -16,15 +16,46 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Mic, MicOff, Send, Bot } from "lucide-react";
+import { Bot } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+
+interface Patient {
+  _id: string;
+  name: string;
+  patientId: string;
+}
+
+interface LabForm {
+  testType: string;
+  specimenType: string;
+  testDate: string;
+  requestedBy: string;
+  resultSummary: string;
+  pathogen: string;
+  remarks: string;
+  status: "pending" | "completed" | "reviewed" | "cancelled";
+}
+
+interface ExtractedData {
+  patient?: string;
+  testType?: string;
+  specimenType?: string;
+  testDate?: string;
+  requestedBy?: string;
+  resultSummary?: string;
+  pathogen?: string;
+  remarks?: string;
+  status?: string;
+  [key: string]: unknown; // safe fallback
+}
+
 
 export default function NewLabReportPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
 
   const [loading, setLoading] = useState(false);
-  const [patients, setPatients] = useState<any[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState("");
 
   const [form, setForm] = useState({
@@ -47,7 +78,7 @@ export default function NewLabReportPage() {
   const [userInput, setUserInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [extractedData, setExtractedData] = useState<any>({});
+  const [extractedData, setExtractedData] = useState<ExtractedData>({});
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
@@ -167,7 +198,7 @@ export default function NewLabReportPage() {
     const currentFlow = conversationFlow[currentStep];
     const extractedValue = currentFlow.extract(response);
 
-    setExtractedData((prev: any) => ({
+    setExtractedData((prev) => ({
       ...prev,
       [currentFlow.field]: extractedValue,
     }));
@@ -206,6 +237,7 @@ export default function NewLabReportPage() {
       mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (err) {
+      console.error("Error accessing microphone", err);
       toast.error("Please allow microphone access");
     }
   };
@@ -224,7 +256,7 @@ export default function NewLabReportPage() {
       if (result.success) {
         const transcription = result.data.transcription || "";
         handleUserResponse(transcription);
-        setExtractedData((prev: any) => ({
+        setExtractedData((prev) => ({
           ...prev,
           ...result.data.extractedData,
         }));
@@ -385,7 +417,7 @@ export default function NewLabReportPage() {
                   <SelectValue placeholder="Choose a patient" />
                 </SelectTrigger>
                 <SelectContent>
-                  {patients.map((p: any) => (
+                  {patients.map((p) => (
                     <SelectItem key={p._id} value={p._id}>
                       {p.name} ({p.patientId})
                     </SelectItem>
@@ -394,7 +426,6 @@ export default function NewLabReportPage() {
               </Select>
             </div>
 
-            {/* Rest of your inputs */}
             <div className="grid grid-cols-1 gap-4">
               <Input
                 placeholder="Test Type"

@@ -10,32 +10,7 @@ import BurnoutAlert from '@/components/dashboard/BurnoutAlert';
 import { analyticsApi } from '@/lib/api/services';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-
-interface DashboardStats {
-  overview: {
-    totalPatients: number;
-    totalClinicalNotes: number;
-    totalLabReports: number;
-    pendingLabReports: number;
-  };
-  monthly: {
-    clinicalNotes: {
-      current: number;
-      previous: number;
-      trend: number;
-    };
-    labReports: {
-      current: number;
-      previous: number;
-      trend: number;
-    };
-  };
-  today: {
-    clinicalNotes: number;
-    labReports: number;
-  };
-  burnout?: any;
-}
+import { DashboardStats } from '@/types/medical';
 
 export default function DashboardPage() {
   const router = useRouter();

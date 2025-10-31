@@ -10,6 +10,28 @@ import {
   ApiResponse,
 } from "@/types/medical";
 
+interface LabReportFilters {
+  status?: 'pending' | 'completed' | 'cancelled';
+  testType?: string;
+  patientId?: string;
+  microbiologistId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+
+interface BurnoutFilters {
+  period?: string;
+  department?: string;
+  userId?: string;
+  [key: string]: string | undefined;
+}
+
+interface BurnoutTrend {
+  date: string;
+  stressLevel: number;
+  hoursWorked: number;
+}
 
 // Auth Services
 export const authApi = {
@@ -86,7 +108,11 @@ export const authApi = {
 
 // Lab Reports Services
 export const labReportsApi = {
-  getReports: async (page: number = 1, limit: number = 10, filters?: any) => {
+  getReports: async (
+    page: number = 1,
+    limit: number = 10,
+    filters?: LabReportFilters
+  ) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -212,7 +238,11 @@ export const patientsApi = {
 
 // Burnout Services
 export const burnoutApi = {
-  getEntries: async (page: number = 1, limit: number = 10, filters?: any) => {
+  getEntries: async (
+    page: number = 1,
+    limit: number = 10,
+    filters?: BurnoutFilters
+  ) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -258,7 +288,7 @@ export const burnoutApi = {
 
   getTrends: async (period: string = "month") => {
     const response = await apiClient.get<
-      ApiResponse<{ period: string; trends: any[]; totalDays: number }>
+      ApiResponse<{ period: string; trends: BurnoutTrend[]; totalDays: number }>
     >(`/burnout/trends?period=${period}`);
     return response.data;
   },
@@ -438,7 +468,7 @@ export const clinicalNotesApi = {
   getNotes: async (
     page: number = 1,
     limit: number = 10,
-    filters?: Record<string, any>
+    filters?: Record<string, string | number | undefined>
   ) => {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -455,35 +485,25 @@ export const clinicalNotesApi = {
 
   // Create a new clinical note
   createNote: async (data: Partial<ClinicalNote>) => {
-    const response = await apiClient.post(
-      `/clinical-notes`,
-      data
-    );
+    const response = await apiClient.post(`/clinical-notes`, data);
     return response.data;
   },
 
   // Get a note by ID
   getNoteById: async (id: string) => {
-    const response = await apiClient.get(
-      `/clinical-notes/${id}`
-    );
+    const response = await apiClient.get(`/clinical-notes/${id}`);
     return response.data;
   },
 
   // Update a note
   updateNote: async (id: string, data: Partial<ClinicalNote>) => {
-    const response = await apiClient.put(
-      `/clinical-notes/${id}`,
-      data
-    );
+    const response = await apiClient.put(`/clinical-notes/${id}`, data);
     return response.data;
   },
 
   // Delete a note
   deleteNote: async (id: string) => {
-    const response = await apiClient.delete(
-      `/clinical-notes/${id}`
-    );
+    const response = await apiClient.delete(`/clinical-notes/${id}`);
     return response.data;
   },
 
@@ -514,37 +534,36 @@ export const transcribeAndExtract = {
       );
 
       return openaiRes.data;
-    } catch (err: any) {
-      console.warn("OpenAI transcription failed:", err?.response?.status);
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "response" in err) {
+        const e = err as { response?: { status?: number } };
+        console.warn("OpenAI transcription failed:", e.response?.status);
 
-      // Fallback only for known quota/auth errors
-      if (err?.response?.status === 429 || err?.response?.status === 401) {
-        console.log("⚡ Switching to AssemblyAI fallback...");
+        if (e.response?.status === 429 || e.response?.status === 401) {
+          console.log("⚡ Switching to AssemblyAI fallback...");
+          try {
+            const formData = new FormData();
+            formData.append("audio", audioBlob);
 
-        try {
-          const formData = new FormData();
-          formData.append("audio", audioBlob);
+            const assemblyRes = await apiClient.post(
+              "/api/assemblyai/transcribe",
+              formData,
+              {
+                headers: { "Content-Type": "multipart/form-data" },
+                timeout: 30000,
+              }
+            );
 
-          const assemblyRes = await apiClient.post(
-            "/api/assemblyai/transcribe",
-            formData,
-            {
-              headers: { "Content-Type": "multipart/form-data" },
-              timeout: 30000,
-            }
-          );
-
-          return assemblyRes.data;
-        } catch (fallbackErr) {
-          console.error("AssemblyAI also failed:", fallbackErr);
-          return {
-            success: false,
-            message: "All transcription services failed",
-          };
+            return assemblyRes.data;
+          } catch (fallbackErr) {
+            console.error("AssemblyAI also failed:", fallbackErr);
+            return {
+              success: false,
+              message: "All transcription services failed",
+            };
+          }
         }
       }
-
-      return { success: false, message: "Transcription failed" };
     }
   },
 };

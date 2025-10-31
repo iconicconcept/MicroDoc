@@ -1,5 +1,14 @@
+export interface RegisterUserData {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  department: string;
+  hospital: string;
+}
+
 export interface User {
-  id: string;
+  _id: string;
   email: string;
   name: string;
   role: 'clinician' | 'microbiologist' | 'lab_staff' | 'admin';
@@ -11,7 +20,7 @@ export interface User {
 }
 
 export interface Patient {
-  id: string;
+  _id: string;
   patientId: string;
   name: string;
   age: number;
@@ -34,6 +43,7 @@ export interface ClinicalNote {
   summary?: string;
   priority: 'low' | 'medium' | 'high';
   isSynced: boolean;
+  status?: string
   createdAt: string;
   updatedAt: string;
   patient?: {
@@ -45,7 +55,7 @@ export interface ClinicalNote {
 }
 
 export interface LabReport {
-  id: string;
+  _id: string;
   sampleId: string;
   patientId: string;
   microbiologistId: string;
@@ -56,19 +66,24 @@ export interface LabReport {
   findings: string;
   status: 'pending' | 'completed' | 'cancelled';
   aiSuggestions: string[];
+  specimenType?: string;
+  testDate?: string | Date;
+  resultSummary?: string;
+  remarks?: string;
+  requestedBy?: string;
   isSynced: boolean;
   createdAt: string;
   updatedAt: string;
-  // patient?: {
-  //   name: string;
-  //   patientId: string;
-  //   age: number;
-  //   gender: string;
-  // };
+  patient?: {
+    name: string;
+    patientId: string;
+    age: number;
+    gender: string;
+  };
 }
 
 export interface BurnoutEntry {
-  id: string;
+  _id: string;
   userId: string;
   hoursWorked: number;
   mood: 'excellent' | 'good' | 'neutral' | 'stressed' | 'exhausted';
@@ -106,6 +121,33 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+
+export interface DashboardStats {
+  overview: {
+    totalPatients: number;
+    totalClinicalNotes: number;
+    totalLabReports: number;
+    pendingLabReports: number;
+  };
+  monthly: {
+    clinicalNotes: {
+      current: number;
+      previous: number;
+      trend: number;
+    };
+    labReports: {
+      current: number;
+      previous: number;
+      trend: number;
+    };
+  };
+  today: {
+    clinicalNotes: number;
+    labReports: number;
+  };
+  burnout?: BurnoutEntry[];
 }
 
 export type ConnectionStatus = 'online' | 'offline' | 'syncing';

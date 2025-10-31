@@ -8,19 +8,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { labReportsApi, patientsApi } from "@/lib/api/services";
 import { formatDate } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { Patient, LabReport } from "@/types/medical";
 
 export default function LabReportDetailPage() {
   const router = useRouter();
   const { id } = useParams();
   const { user, isAuthenticated } = useAuthStore();
 
-  const [report, setReport] = useState<any>(null);
-  const [patients, setPatients] = useState<any[]>([]);
+  const [report, setReport] = useState<LabReport | null>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -53,7 +60,7 @@ export default function LabReportDetailPage() {
         const data = reportRes.data;
         setReport(data);
         setForm({
-          patientId: data.patientId?._id || data.patientId || "",
+          patientId: data.patient?.patientId || data.patientId || "",
           testType: data.testType || "",
           specimenType: data.specimenType || "",
           testDate: data.testDate ? data.testDate.split("T")[0] : "",
@@ -124,7 +131,9 @@ export default function LabReportDetailPage() {
       <div className="max-w-3xl mx-auto py-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Lab Report Details</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Lab Report Details
+          </h1>
           <div className="flex gap-2">
             {isEditing ? (
               <>
@@ -145,9 +154,10 @@ export default function LabReportDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {report.patientId?.name || "Unknown Patient"}{" "}
+              {report.patient?.name || "Unknown Patient"}{" "}
               <span className="text-sm text-gray-500">
-                • {report.patientId?.patientId || "No ID"} • {formatDate(report.createdAt)}
+                • {report.patient?.patientId || "No ID"} •{" "}
+                {formatDate(report.createdAt)}
               </span>
             </CardTitle>
           </CardHeader>
@@ -161,31 +171,34 @@ export default function LabReportDetailPage() {
                   value={form.patientId}
                   onValueChange={(v) => setForm({ ...form, patientId: v })}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select patient" />
+                  </SelectTrigger>
                   <SelectContent>
                     {patients.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
+                      <SelectItem key={p._id} value={p._id}>
                         {p.name} — {p.patientId}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               ) : (
-                <Input
-                  readOnly
-                  value={report.patientId?.name || "N/A"}
-                />
+                <Input readOnly value={report.patient?.name || "N/A"} />
               )}
             </div>
 
             {/* Test Type & Specimen */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium block mb-2">Test Type</label>
+                <label className="text-sm font-medium block mb-2">
+                  Test Type
+                </label>
                 {isEditing ? (
                   <Input
                     value={form.testType}
-                    onChange={(e) => setForm({ ...form, testType: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, testType: e.target.value })
+                    }
                   />
                 ) : (
                   <Input readOnly value={report.testType || "N/A"} />
@@ -193,11 +206,15 @@ export default function LabReportDetailPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">Specimen Type</label>
+                <label className="text-sm font-medium block mb-2">
+                  Specimen Type
+                </label>
                 {isEditing ? (
                   <Input
                     value={form.specimenType}
-                    onChange={(e) => setForm({ ...form, specimenType: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, specimenType: e.target.value })
+                    }
                   />
                 ) : (
                   <Input readOnly value={report.specimenType || "N/A"} />
@@ -208,24 +225,37 @@ export default function LabReportDetailPage() {
             {/* Test Date & Requested By */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium block mb-2">Test Date</label>
+                <label className="text-sm font-medium block mb-2">
+                  Test Date
+                </label>
                 {isEditing ? (
                   <Input
                     type="date"
                     value={form.testDate}
-                    onChange={(e) => setForm({ ...form, testDate: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, testDate: e.target.value })
+                    }
                   />
                 ) : (
-                  <Input readOnly value={formatDate(report.testDate)} />
+                  <Input
+                    readOnly
+                    value={
+                      report.testDate ? formatDate(report.testDate) : "No date"
+                    }
+                  />
                 )}
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">Requested By</label>
+                <label className="text-sm font-medium block mb-2">
+                  Requested By
+                </label>
                 {isEditing ? (
                   <Input
                     value={form.requestedBy}
-                    onChange={(e) => setForm({ ...form, requestedBy: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, requestedBy: e.target.value })
+                    }
                   />
                 ) : (
                   <Input readOnly value={report.requestedBy || "N/A"} />
@@ -235,12 +265,16 @@ export default function LabReportDetailPage() {
 
             {/* Result Summary */}
             <div>
-              <label className="text-sm font-medium block mb-2">Result Summary</label>
+              <label className="text-sm font-medium block mb-2">
+                Result Summary
+              </label>
               {isEditing ? (
                 <Textarea
                   rows={5}
                   value={form.resultSummary}
-                  onChange={(e) => setForm({ ...form, resultSummary: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, resultSummary: e.target.value })
+                  }
                 />
               ) : (
                 <p className="p-2 bg-gray-50 rounded whitespace-pre-wrap">
@@ -255,7 +289,9 @@ export default function LabReportDetailPage() {
               {isEditing ? (
                 <Input
                   value={form.pathogen}
-                  onChange={(e) => setForm({ ...form, pathogen: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, pathogen: e.target.value })
+                  }
                 />
               ) : (
                 <Input readOnly value={report.pathogen || "N/A"} />
@@ -269,7 +305,9 @@ export default function LabReportDetailPage() {
                 <Textarea
                   rows={3}
                   value={form.remarks}
-                  onChange={(e) => setForm({ ...form, remarks: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, remarks: e.target.value })
+                  }
                 />
               ) : (
                 <p className="p-2 bg-gray-50 rounded whitespace-pre-wrap">
@@ -286,7 +324,9 @@ export default function LabReportDetailPage() {
                   value={form.status}
                   onValueChange={(v) => setForm({ ...form, status: v })}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>

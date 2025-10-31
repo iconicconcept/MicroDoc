@@ -36,11 +36,56 @@ const speak = (text: string) => {
   }
 };
 
+interface SpeechRecognitionErrorEvent {
+  error: string;
+  message?: string;
+}
+
+// For browsers where SpeechRecognition isn’t declared in types
+declare global {
+  interface Window {
+    webkitSpeechRecognition?: typeof SpeechRecognition;
+    SpeechRecognition?: typeof SpeechRecognition;
+  }
+
+  interface SpeechRecognition extends EventTarget {
+    lang: string;
+    continuous: boolean;
+    interimResults: boolean;
+    start(): void;
+    stop(): void;
+    onresult: ((event: SpeechRecognitionEvent) => void) | null;
+    onerror: ((event: SpeechRecognitionErrorEvent) => void) | null; // <— change any
+    onend: (() => void) | null;
+  }
+
+  interface SpeechRecognitionEvent {
+    resultIndex: number;
+    results: SpeechRecognitionResultList;
+  }
+}
+
+interface Patient {
+  _id: string;
+  name: string;
+  patientId: string;
+}
+
+interface ExtractedData {
+  patient?: string;
+  chiefComplaint?: string;
+  diagnosis?: string;
+  plan?: string;
+  type?: string;
+  priority?: string;
+  content?: string;
+}
+
 export default function NewClinicalNotePage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
 
-  const [patients, setPatients] = useState<any[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState("");
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
@@ -53,7 +98,7 @@ export default function NewClinicalNotePage() {
 
   // --- Live Speech Recognition ---
   const [liveTranscript, setLiveTranscript] = useState("");
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // AI Voice Features
   const [isRecording, setIsRecording] = useState(false);
@@ -65,7 +110,7 @@ export default function NewClinicalNotePage() {
   const [userInput, setUserInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [extractedData, setExtractedData] = useState<any>({});
+  const [extractedData, setExtractedData] = useState<ExtractedData>({});
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -263,7 +308,7 @@ export default function NewClinicalNotePage() {
       return;
     }
 
-    setExtractedData((prev: any) => {
+    setExtractedData((prev) => {
       const newData = { ...prev, [currentFlow.field]: extractedValue };
       if (currentFlow.field === "content") applyExtractedData();
       return newData;
@@ -380,7 +425,7 @@ export default function NewClinicalNotePage() {
       handleUserResponse(transcription);
 
       if (result.data.extractedData) {
-        setExtractedData((prev: any) => ({
+        setExtractedData((prev) => ({
           ...prev,
           ...result.data.extractedData,
         }));
@@ -416,7 +461,7 @@ export default function NewClinicalNotePage() {
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = "";
       let finalTranscript = "";
 
@@ -432,7 +477,7 @@ export default function NewClinicalNotePage() {
       setLiveTranscript(finalTranscript + interimTranscript);
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: { error: SpeechRecognitionErrorEvent }) => {
       console.error("Speech recognition error:", event.error);
     };
 
@@ -463,26 +508,25 @@ export default function NewClinicalNotePage() {
   };
 
   const handleNoResponse = () => {
-  // Only trigger if currently recording and not processing
-  if (!isRecording || isProcessing) return;
+    // Only trigger if currently recording and not processing
+    if (!isRecording || isProcessing) return;
 
-  setTimeout(() => {
-    if (!isRecording || isProcessing) return; // cancel if user already spoke or it's processing
+    setTimeout(() => {
+      if (!isRecording || isProcessing) return; // cancel if user already spoke or it's processing
 
-    if (retryCount >= 2) {
-      speak("Let's skip this question. You can fill it manually later.");
-      setRetryCount(0);
-      setCurrentStep((s) => s + 1);
-      askNextQuestion(currentStep + 1);
-    } else {
-      setRetryCount((r) => r + 1);
-      speak("I couldn’t hear your response. Please try again.");
-      stopRecording(); // ensure clean restart
-      setTimeout(() => startRecording(), 2000);
-    }
-  }, 5000); // waits 10 seconds of silence
-};
-
+      if (retryCount >= 2) {
+        speak("Let's skip this question. You can fill it manually later.");
+        setRetryCount(0);
+        setCurrentStep((s) => s + 1);
+        askNextQuestion(currentStep + 1);
+      } else {
+        setRetryCount((r) => r + 1);
+        speak("I couldn’t hear your response. Please try again.");
+        stopRecording(); // ensure clean restart
+        setTimeout(() => startRecording(), 2000);
+      }
+    }, 5000); // waits 10 seconds of silence
+  };
 
   const handleSubmit = async () => {
     if (!selectedPatient) {
@@ -661,7 +705,7 @@ export default function NewClinicalNotePage() {
                   <SelectValue placeholder="Select patient" />
                 </SelectTrigger>
                 <SelectContent>
-                  {patients.map((p: any) => (
+                  {patients.map((p: Patient) => (
                     <SelectItem key={p._id} value={p._id}>
                       {p.name} ({p.patientId})
                     </SelectItem>

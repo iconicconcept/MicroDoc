@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, FileText, Microscope, Clock, TrendingUp, TrendingDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DashboardStats} from "@/types/medical"
 
 interface StatsOverviewProps {
-  stats: any;
+  stats: DashboardStats | null;
   isLoading: boolean;
 }
 

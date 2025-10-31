@@ -65,7 +65,7 @@ export default function VoiceNoteModal({
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
+        const _audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/wav",
         });
         // Simulate transcription - in real app, send to speech-to-text service
@@ -113,7 +113,7 @@ export default function VoiceNoteModal({
     try {
       await clinicalNotesApi.createNote({
         patientId: "temp-patient-id", // In real app, select from patient list
-        clinicianId: user?.id || "",
+        clinicianId: user?._id || "",
         type: category,
         content: transcript,
         transcript: transcript,
@@ -207,7 +207,9 @@ Key points extracted: Patient presentation, symptoms, and recommended follow-up.
               </label>
               <Select
                 value={category}
-                onValueChange={(value: any) => setCategory(value)}
+                onValueChange={(value: "clinical" | "lab" | "procedure") =>
+                  setCategory(value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -226,7 +228,9 @@ Key points extracted: Patient presentation, symptoms, and recommended follow-up.
               </label>
               <Select
                 value={priority}
-                onValueChange={(value: any) => setPriority(value)}
+                onValueChange={(value: "low" | "medium" | "high") =>
+                  setPriority(value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User } from '@/types/medical';
+import { User, RegisterUserData } from "@/types/medical";
 import { authApi } from '@/lib/api/services';
 
 
@@ -10,7 +10,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
+  register: (userData: RegisterUserData) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   checkAuth: () => Promise<void>;
@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (data) => {
+      register: async (data: RegisterUserData) => {
         set({ isLoading: true });
         try {
           const res = await authApi.register(data);

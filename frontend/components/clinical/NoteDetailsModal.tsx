@@ -45,10 +45,10 @@ export default function NoteDetailsModal({
             <p>
               <strong>Priority:</strong> <Badge>{note.priority}</Badge>
             </p>
-            <p>
+            {/* <p>
               <strong>Status:</strong>{" "}
               <Badge variant="outline">{note.status}</Badge>
-            </p>
+            </p> */}
           </div>
 
           <Separator />

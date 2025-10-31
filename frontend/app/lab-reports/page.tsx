@@ -28,13 +28,26 @@ import { useRouter } from "next/navigation";
 // import VoiceNoteModal from "@/components/clinical/VoiceNoteModal";
 import DeleteConfirmDialog from "@/components/delete/Delete";
 
+interface LabReport {
+  id?: string;
+  _id?: string;
+  name?: string;
+  patient?: {
+    name?: string;
+  };
+  testType?: string;
+  status?: string;
+  resultSummary?: string;
+  createdAt?: string | Date;
+}
+
 export default function LabReportsPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState<LabReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   useEffect(() => {
     if (isAuthenticated) {
       loadReports();
@@ -59,7 +72,7 @@ export default function LabReportsPage() {
   };
 
   const filteredReports = reports.filter(
-    (report: any) =>
+    (report: LabReport) =>
       report.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.testType?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -149,7 +162,7 @@ export default function LabReportsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredReports.map((report: any) => (
+                {filteredReports.map((report: LabReport) => (
                   <div
                     key={report.id}
                     className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -173,7 +186,11 @@ export default function LabReportsPage() {
                         <div className="text-right text-sm flex flex-col gap-2 text-gray-500">
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-3 w-3" />
-                            <span>{formatDate(report.createdAt)}</span>
+                            <span>
+                              {report.createdAt
+                                ? formatDate(report.createdAt)
+                                : "No date"}
+                            </span>
                           </div>
                           <div className="flex flex-col md:flex-row gap-2">
                             {/* View Details Button */}
@@ -197,6 +214,10 @@ export default function LabReportsPage() {
                               <DeleteConfirmDialog
                                 itemName="Lab Report"
                                 onConfirm={async () => {
+                                  if (!report._id) {
+                                    console.error("No report ID found");
+                                    return;
+                                  }
                                   await labReportsApi.deleteReport(report._id);
                                   router.push("/lab-reports");
                                 }}

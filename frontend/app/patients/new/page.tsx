@@ -20,6 +20,24 @@ import { toast } from "sonner";
 import { patientsApi, transcribeAndExtract } from "@/lib/api/services";
 import { Bot } from "lucide-react";
 
+interface ExtractedData {
+  name?: string;
+  age?: number | string;
+  gender?: string;
+  contact?: string;
+  address?: string;
+  bloodGroup?: string;
+  allergies?: string;
+  medicalHistory?: string;
+  assignedClinician?: string;
+  [key: string]: unknown; // fallback
+}
+
+interface ConversationMessage {
+  type: "ai" | "user";
+  text: string;
+}
+
 export default function NewPatientPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
@@ -51,7 +69,7 @@ export default function NewPatientPage() {
   const [userInput, setUserInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [extractedData, setExtractedData] = useState<any>({});
+  const [extractedData, setExtractedData] = useState<ExtractedData>({});
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
@@ -151,7 +169,7 @@ export default function NewPatientPage() {
     const currentFlow = conversationFlow[currentStep];
     const extractedValue = currentFlow.extract(response);
 
-    setExtractedData((prev: any) => ({
+    setExtractedData((prev) => ({
       ...prev,
       [currentFlow.field]: extractedValue,
     }));
@@ -189,6 +207,7 @@ export default function NewPatientPage() {
       mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (err) {
+      console.error("Error accessing microphone:", err);
       toast.error("Please allow microphone access");
     }
   };
@@ -207,7 +226,7 @@ export default function NewPatientPage() {
     if (result.success) {
       const transcription = result.data.transcription || "";
       handleUserResponse(transcription);
-      setExtractedData((prev: any) => ({
+      setExtractedData((prev) => ({
         ...prev,
         ...result.data.extractedData,
       }));
