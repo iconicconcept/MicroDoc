@@ -37,11 +37,11 @@ export interface ClinicalNote {
   _id: string;
   patientId: string;
   clinicianId: string;
-  type: 'clinical' | 'lab' | 'procedure';
+  type?: 'clinical' | 'lab' | 'procedure';
   content: string;
   transcript?: string;
   summary?: string;
-  priority: 'low' | 'medium' | 'high';
+  priority?: 'low' | 'medium' | 'high';
   isSynced: boolean;
   status?: string
   createdAt: string | Date;

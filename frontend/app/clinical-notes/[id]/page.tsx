@@ -39,7 +39,7 @@ export default function ClinicalNoteDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<Partial<ClinicalNote>>({
     type: "clinical",
     priority: "medium",
     chiefComplaint: "",
