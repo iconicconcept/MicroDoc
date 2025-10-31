@@ -448,8 +448,7 @@ export default function NewClinicalNotePage() {
   // --- Start Browser Live Transcription ---
   const startLiveRecognition = () => {
     const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       console.warn("SpeechRecognition not supported in this browser.");
