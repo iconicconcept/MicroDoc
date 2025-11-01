@@ -560,7 +560,7 @@ export default function NewClinicalNotePage() {
         chiefComplaint,
         diagnosis,
         plan,
-        type: type,
+        type,
         priority,
         content,
         transcript: content,
