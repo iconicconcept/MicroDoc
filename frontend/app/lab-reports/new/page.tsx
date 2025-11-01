@@ -155,7 +155,7 @@ export default function NewLabReportPage() {
   const fetchPatients = async () => {
     try {
       const res = await patientsApi.getPatients(1, 50);
-      if (res.success) setPatients(res.data.items || []);
+      if (res.success) setPatients(res.data?.items || []);
     } catch (err) {
       toast.error("Failed to load patients");
       console.error("Failed to load patients", err);
