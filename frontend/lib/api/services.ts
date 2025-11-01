@@ -11,7 +11,7 @@ import {
 } from "@/types/medical";
 
 interface LabReportFilters {
-  status?: 'pending' | 'completed' | 'cancelled';
+  status?: 'pending' | 'completed' | 'cancelled' | 'reviewed';
   testType?: string;
   patientId?: string;
   microbiologistId?: string;

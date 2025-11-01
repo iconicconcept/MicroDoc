@@ -37,9 +37,9 @@ export default function PatientDetailPage() {
   const fetchPatient = async () => {
     try {
       const res = await patientsApi.getPatientById(id as string);
-      if (res.success) {
-        setPatient(res.data.patient);
-        setForm(res.data.patient);
+      if (res.success && res.data) {
+        setPatient(res.data)
+        setForm(res.data)
       } else {
         toast.error("Failed to load patient details");
       }
@@ -57,7 +57,7 @@ export default function PatientDetailPage() {
   const handleSave = async () => {
     try {
       const res = await patientsApi.updatePatient(id as string, form);
-      if (res.success) {
+      if (res.success && res.data) {
         toast.success("Patient updated successfully");
         setPatient(res.data);
         setIsEditing(false);

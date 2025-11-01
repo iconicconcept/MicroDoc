@@ -48,10 +48,8 @@ export default function PatientsPage() {
 
   const loadPatients = async () => {
     try {
-      const response = await patientsApi.getPatients();
-      if (response.success && response.data) {
-        setPatients(response.data?.items || []);
-      }
+      const res = await patientsApi.getPatients();
+      if (res.success) setPatients(res.data?.items || []);
     } catch (error) {
       toast.error("Failed to load patients");
       console.error("Failed to patients", error);

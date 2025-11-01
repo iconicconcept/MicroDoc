@@ -39,7 +39,14 @@ export interface Patient {
 
 export interface ClinicalNote {
   _id: string;
-  patientId: string;
+  patientId: string | {
+    _id: string;
+    name: string;
+    patientId: string;
+    age: number;
+    gender: string;
+    cardNumber?: string;
+  };
   clinicianId: string;
   type?: "clinical" | "lab" | "procedure";
   content: string;
@@ -71,8 +78,8 @@ export interface LabReport {
   pathogen?: string;
   results?: string;
   antibioticSensitivity: string[];
-  findings: string;
-  status: "pending" | "completed" | "cancelled";
+  findings?: string;
+  status: "pending" | "completed" | "reviewed" | "cancelled";
   aiSuggestions: string[];
   specimenType?: string;
   testDate?: string | Date;

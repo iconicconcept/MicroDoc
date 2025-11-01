@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { labReportsApi, patientsApi, transcribeAndExtract } from "@/lib/api/services";
+import {
+  labReportsApi,
+  patientsApi,
+  transcribeAndExtract,
+} from "@/lib/api/services";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,16 +29,16 @@ interface Patient {
   patientId: string;
 }
 
-// interface LabForm {
-//   testType: string;
-//   specimenType: string;
-//   testDate: string;
-//   requestedBy: string;
-//   resultSummary: string;
-//   pathogen: string;
-//   remarks: string;
-//   status: "pending" | "completed" | "reviewed" | "cancelled";
-// }
+interface LabForm {
+  testType: string;
+  specimenType: string;
+  testDate: string;
+  requestedBy: string;
+  resultSummary: string;
+  pathogen: string;
+  remarks: string;
+  status: "pending" | "completed" | "reviewed" | "cancelled";
+}
 
 interface ExtractedData {
   patient?: string;
@@ -45,10 +49,9 @@ interface ExtractedData {
   resultSummary?: string;
   pathogen?: string;
   remarks?: string;
-  status?: string;
+  status?: "pending" | "completed" | "reviewed" | "cancelled";
   [key: string]: unknown; // safe fallback
 }
-
 
 export default function NewLabReportPage() {
   const router = useRouter();
@@ -58,7 +61,7 @@ export default function NewLabReportPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState("");
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<LabForm>({
     testType: "",
     specimenType: "",
     testDate: "",
@@ -136,7 +139,9 @@ export default function NewLabReportPage() {
       field: "status",
       question:
         "Status of report? (Pending, Completed, Reviewed, or Cancelled)",
-      extract: (text: string) => {
+      extract: (
+        text: string
+      ): "pending" | "completed" | "reviewed" | "cancelled" => {
         const lower = text.toLowerCase();
         if (lower.includes("review")) return "reviewed";
         if (lower.includes("complete")) return "completed";
@@ -210,10 +215,23 @@ export default function NewLabReportPage() {
 
   const applyExtractedData = () => {
     if (extractedData.patient) setSelectedPatient(extractedData.patient);
-    Object.keys(form).forEach((key) => {
-      if (extractedData[key])
-        setForm((prev) => ({ ...prev, [key]: extractedData[key] }));
-    });
+
+    setForm((prev) => ({
+      testType: (extractedData.testType as string) || prev.testType,
+      specimenType: (extractedData.specimenType as string) || prev.specimenType,
+      testDate: (extractedData.testDate as string) || prev.testDate,
+      requestedBy: (extractedData.requestedBy as string) || prev.requestedBy,
+      resultSummary:
+        (extractedData.resultSummary as string) || prev.resultSummary,
+      pathogen: (extractedData.pathogen as string) || prev.pathogen,
+      remarks: (extractedData.remarks as string) || prev.remarks,
+      status:
+        (extractedData.status as
+          | "pending"
+          | "completed"
+          | "reviewed"
+          | "cancelled") || prev.status,
+    }));
   };
 
   const startRecording = async () => {
@@ -286,7 +304,20 @@ export default function NewLabReportPage() {
       const payload = {
         sampleId: `SAMPLE-${Date.now()}`,
         patientId: selectedPatient,
-        ...form,
+        microbiologistId: user?._id || "",
+        testType: form.testType,
+        specimenType: form.specimenType,
+        testDate: form.testDate || undefined,
+        requestedBy: form.requestedBy || undefined,
+        resultSummary: form.resultSummary,
+        pathogen: form.pathogen || undefined,
+        remarks: form.remarks || undefined,
+        findings: form.resultSummary,
+        results: form.resultSummary,
+        status: form.status,
+        antibioticSensitivity: [],
+        aiSuggestions: [],
+        isSynced: true,
       };
 
       const response = await labReportsApi.createReport(payload);
@@ -472,7 +503,16 @@ export default function NewLabReportPage() {
               />
               <Select
                 value={form.status}
-                onValueChange={(val) => setForm({ ...form, status: val })}
+                onValueChange={(val) =>
+                  setForm({
+                    ...form,
+                    status: val as
+                      | "pending"
+                      | "completed"
+                      | "reviewed"
+                      | "cancelled",
+                  })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />

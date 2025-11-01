@@ -95,8 +95,8 @@ export default function NewClinicalNotePage() {
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
   const [plan, setPlan] = useState("");
-  const [type, setType] = useState("clinical");
-  const [priority, setPriority] = useState("medium");
+  const [type, setType] = useState<"clinical" | "lab" | "procedure">("clinical");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   //const [retryCount, setRetryCount] = useState(0);
@@ -217,10 +217,10 @@ export default function NewClinicalNotePage() {
       setConversation((prev) => [...prev, { type: "ai", text: question }]);
       speak(question);
 
-      // 🟢 Wait for speech to finish, then start recording automatically
+      // Wait for speech to finish, then start recording automatically
       const utterance = new SpeechSynthesisUtterance(question);
       utterance.onend = () => {
-        console.log("✅ AI finished speaking. Starting recording...");
+        console.log(" AI finished speaking. Starting recording...");
         startRecording(); // Automatically start mic after each question
       };
       window.speechSynthesis.cancel();
@@ -330,8 +330,8 @@ export default function NewClinicalNotePage() {
       setChiefComplaint(extractedData.chiefComplaint);
     if (extractedData.diagnosis) setDiagnosis(extractedData.diagnosis);
     if (extractedData.plan) setPlan(extractedData.plan);
-    if (extractedData.type) setType(extractedData.type);
-    if (extractedData.priority) setPriority(extractedData.priority);
+    if (extractedData.type) setType(extractedData.type as "clinical" | "lab" | "procedure");
+    if (extractedData.priority) setPriority(extractedData.type as "low" | "medium" | "high");
     if (extractedData.content) setContent(extractedData.content);
   };
 
@@ -359,7 +359,7 @@ export default function NewClinicalNotePage() {
 
         if (avg < silenceThreshold) {
           if (Date.now() - silenceStart > silenceDuration) {
-            console.log("🛑 Silence detected, stopping...");
+            console.log("Silence detected, stopping...");
             stopRecording();
             return;
           }
@@ -560,12 +560,12 @@ export default function NewClinicalNotePage() {
         chiefComplaint,
         diagnosis,
         plan,
-        type,
-        priority,
+        type: type as "clinical" | "lab" | "procedure",
+        priority: priority as "low" | "medium" | "high",
         content,
         transcript: content,
-        status: "final",
-        date: new Date().toISOString(),
+        status: "pending",
+        // date: new Date().toISOString(),
         isSynced: true,
       };
 
@@ -762,7 +762,7 @@ export default function NewClinicalNotePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium block mb-2">Type</label>
-                <Select value={type} onValueChange={setType}>
+                <Select value={type} onValueChange={(value) => setType(value as "clinical" | "lab" | "procedure")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -778,7 +778,7 @@ export default function NewClinicalNotePage() {
                 <label className="text-sm font-medium block mb-2">
                   Priority
                 </label>
-                <Select value={priority} onValueChange={setPriority}>
+                <Select value={priority} onValueChange={(value) => setPriority(value as "low" | "medium" | "high")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

@@ -32,7 +32,17 @@ export default function LabReportDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    patientId: string;
+    testType: string;
+    specimenType: string;
+    testDate: string;
+    requestedBy: string;
+    resultSummary: string;
+    pathogen: string;
+    remarks: string;
+    status: "pending" | "completed" | "reviewed" | "cancelled";
+  }>({
     patientId: "",
     testType: "",
     specimenType: "",
@@ -72,7 +82,9 @@ export default function LabReportDetailPage() {
         });
       } else toast.error("Failed to load report details");
 
-      if (patientsRes.success) setPatients(patientsRes.data.items || []);
+      if (patientsRes?.success) {
+        setPatients(patientsRes.data?.items || []);
+      }
     } catch (error) {
       toast.error("Error loading report");
       console.error(error);
@@ -322,7 +334,16 @@ export default function LabReportDetailPage() {
               {isEditing ? (
                 <Select
                   value={form.status}
-                  onValueChange={(v) => setForm({ ...form, status: v })}
+                  onValueChange={(v) =>
+                    setForm({
+                      ...form,
+                      status: v as
+                        | "pending"
+                        | "completed"
+                        | "reviewed"
+                        | "cancelled",
+                    })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />

@@ -43,14 +43,13 @@ export default function ClinicalNotesPage() {
     try {
       const response = await clinicalNotesApi.getNotes(1, 20);
       if (response.success && response.data) {
-        const response = await clinicalNotesApi.getNotes(1, 20);
-        if (response.success && response.data) {
-          const formattedNotes = response.data.items.map((note: ClinicalNote) => ({
-            ...note,
-            patient: note.patientId,
-          }));
-          setNotes(formattedNotes);
-        }
+        // const response = await clinicalNotesApi.getNotes(1, 20);
+        // if (response.success && response.data) {
+        //   const formattedNotes = response.data.items.map((note: ClinicalNote) => ({
+        //     ...note,
+        //     patient: note.patientId,
+        //   }));
+        setNotes(response.data.items);
       }
     } catch (error) {
       toast.error("Failed to load clinical notes");
