@@ -29,6 +29,10 @@ export interface Patient {
   address?: string;
   medicalHistory?: string;
   allergies?: string[];
+  bloodGroup?: string;
+  cardNumber?: string;
+  assignedClinician?: string;
+  registeredBy?: string;
   createdAt: string;
   updatedAt: string;
 }

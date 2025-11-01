@@ -770,7 +770,6 @@ export default function NewClinicalNotePage() {
                     <SelectItem value="clinical">Clinical</SelectItem>
                     <SelectItem value="lab">Lab</SelectItem>
                     <SelectItem value="procedure">Procedure</SelectItem>
-                    <SelectItem value="progress">Progress</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

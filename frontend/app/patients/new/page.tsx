@@ -34,10 +34,10 @@ interface ExtractedData {
   [key: string]: unknown; // fallback
 }
 
-interface ConversationMessage {
-  type: "ai" | "user";
-  text: string;
-}
+// interface ConversationMessage {
+//   type: "ai" | "user";
+//   text: string;
+// }
 
 export default function NewPatientPage() {
   const router = useRouter();
@@ -273,7 +273,7 @@ export default function NewPatientPage() {
         allergies: form.allergies
           ? form.allergies.split(",").map((a) => a.trim())
           : [],
-        registrationDate: new Date().toISOString(),
+        // registrationDate: new Date().toISOString(),
       };
 
       const response = await patientsApi.createPatient(payload);
