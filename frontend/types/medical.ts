@@ -11,7 +11,7 @@ export interface User {
   _id: string;
   email: string;
   name: string;
-  role: 'clinician' | 'microbiologist' | 'lab_staff' | 'admin';
+  role: "clinician" | "microbiologist" | "lab_staff" | "admin";
   department: string;
   hospital: string;
   isActive: boolean;
@@ -24,7 +24,7 @@ export interface Patient {
   patientId: string;
   name: string;
   age: number;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   contact?: string;
   address?: string;
   medicalHistory?: string;
@@ -37,13 +37,13 @@ export interface ClinicalNote {
   _id: string;
   patientId: string;
   clinicianId: string;
-  type?: 'clinical' | 'lab' | 'procedure';
+  type?: "clinical" | "lab" | "procedure";
   content: string;
   transcript?: string;
   summary?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: "low" | "medium" | "high";
   isSynced: boolean;
-  status?: string
+  status?: string;
   chiefComplaint?: string;
   diagnosis?: string;
   plan?: string;
@@ -63,12 +63,12 @@ export interface LabReport {
   sampleId: string;
   patientId: string;
   microbiologistId: string;
-  testType: string,
+  testType: string;
   pathogen?: string;
   results?: string;
   antibioticSensitivity: string[];
   findings: string;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: "pending" | "completed" | "cancelled";
   aiSuggestions: string[];
   specimenType?: string;
   testDate?: string | Date;
@@ -90,7 +90,7 @@ export interface BurnoutEntry {
   _id: string;
   userId: string;
   hoursWorked: number;
-  mood: 'excellent' | 'good' | 'neutral' | 'stressed' | 'exhausted';
+  mood: "excellent" | "good" | "neutral" | "stressed" | "exhausted";
   stressLevel: 1 | 2 | 3 | 4 | 5;
   notes?: string;
   date: string;
@@ -102,20 +102,18 @@ export interface BurnoutAnalytics {
   averageHours: number;
   averageStress: number;
   moodDistribution: Record<string, number>;
-  burnoutRisk: 'low' | 'moderate' | 'high';
+  burnoutRisk: "low" | "moderate" | "high";
   totalEntries: number;
   recommendations: string[];
 }
 
 export interface PaginatedResponse<T> {
-  data: {
-    items: T[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
+  items: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
   };
   success: boolean;
 }
@@ -126,7 +124,6 @@ export interface ApiResponse<T> {
   error?: string;
   message?: string;
 }
-
 
 export interface DashboardStats {
   overview: {
@@ -154,4 +151,4 @@ export interface DashboardStats {
   burnout?: BurnoutEntry[];
 }
 
-export type ConnectionStatus = 'online' | 'offline' | 'syncing';
+export type ConnectionStatus = "online" | "offline" | "syncing";
