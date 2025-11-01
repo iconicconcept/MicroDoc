@@ -193,11 +193,7 @@ export default function NewClinicalNotePage() {
   const fetchPatients = async () => {
     try {
       const res = await patientsApi.getPatients(1, 50);
-      if (res?.success && res.data?.items) {
-        setPatients(res.data.items);
-      } else {
-        setPatients([]);
-      }
+      if (res.success) setPatients(res.data.items || []);
     } catch (err) {
       toast.error("Failed to load patients");
       console.error("Failed to load patients", err);
